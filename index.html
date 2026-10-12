@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>لوحة المتابعة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg: #F6F4F1; --card: #FFFFFF; --ink: #29252D; --ink2: #6B6470; --ink3: #9A93A0;
+    --line: #E7E1E8; --soft: #F1EDF3;
+    --primary: #4B3A5A; --primary-2: #7A6B83; --gold: #C59A4A; --gold-soft: #FCF5E6;
+    --good: #2E7D4F; --good-soft: #E6F3EA; --warn: #9A6A12; --warn-soft: #FCF1DA;
+    --bad: #B03A3A; --bad-soft: #FBE7E7; --info: #3C5F8C; --info-soft: #E6EEF7;
+    --chart: #5B4670; --chart-2: #C59A4A; --grid: #EEEAF0;
+    --r: 14px; --shadow: 0 1px 2px rgba(41,37,45,.04), 0 4px 16px rgba(41,37,45,.05);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'IBM Plex Sans Arabic', Tahoma, Arial, sans-serif; font-size: 15px; line-height: 1.55; }
+button, input, select, textarea { font: inherit; color: inherit; }
+a { color: var(--primary); }
+[hidden] { display: none !important; }
+.wrap { max-width: 1280px; margin: 0 auto; padding: 0 16px 48px; }
+
+/* ---------- الهيدر */
+.top { position: sticky; top: 0; z-index: 50; background: rgba(246,244,241,.92); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+.top-in { max-width: 1280px; margin: 0 auto; padding: 10px 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; }
+.brand-ic { width: 34px; height: 34px; border-radius: 10px; background: var(--primary); color: #fff; display: grid; place-items: center; font-size: 18px; }
+.brand small { display: block; font-weight: 500; color: var(--ink2); font-size: 12px; }
+.top-actions { margin-inline-start: auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; padding: 4px 10px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); color: var(--ink2); white-space: nowrap; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink3); flex-shrink: 0; }
+.dot.ok { background: #2FA866; } .dot.warn { background: #D9A93A; } .dot.bad { background: #D04A4A; }
+.btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--card); color: var(--primary); border-radius: 10px; padding: 7px 12px; font-size: 13.5px; font-weight: 600; cursor: pointer; text-decoration: none; white-space: nowrap; }
+.btn:hover { border-color: var(--primary); }
+.btn.solid { background: var(--primary); color: #fff; border-color: var(--primary); }
+.btn.wa { color: #1F8A4C; }
+.btn.sm { padding: 4px 9px; font-size: 12.5px; border-radius: 8px; }
+.btn[disabled] { opacity: .5; cursor: default; }
+
+/* ---------- التبويبات */
+.tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; padding: 12px 0; }
+.tabs::-webkit-scrollbar { display: none; }
+.tabs button { flex-shrink: 0; border: 1px solid transparent; background: transparent; border-radius: 10px; padding: 8px 14px; font-weight: 600; font-size: 14px; color: var(--ink2); cursor: pointer; white-space: nowrap; }
+.tabs button.active { background: var(--card); color: var(--primary); border-color: var(--line); box-shadow: var(--shadow); }
+.tabs .cnt { background: var(--bad); color: #fff; border-radius: 999px; font-size: 11px; padding: 0 7px; margin-inline-start: 6px; }
+.tabs .cnt.neutral { background: var(--primary); }
+.panel { display: none; }
+.panel.active { display: block; animation: fade .18s ease; }
+@keyframes fade { from { opacity: .4; } to { opacity: 1; } }
+
+/* ---------- الكروت */
+.grid { display: grid; gap: 14px; }
+.g-kpi { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.g-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.g-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 960px) { .g-2, .g-3 { grid-template-columns: 1fr; } }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; box-shadow: var(--shadow); min-width: 0; }
+.card h3 { margin: 0 0 4px; font-size: 15.5px; display: flex; align-items: center; gap: 8px; }
+.card .sub { margin: 0 0 12px; color: var(--ink2); font-size: 13px; }
+.src { font-size: 11.5px; color: var(--ink3); margin-top: 10px; display: flex; gap: 4px; align-items: flex-start; }
+.src code { background: var(--soft); border-radius: 5px; padding: 0 5px; font-size: 11px; color: var(--ink2); direction: ltr; unicode-bidi: isolate; }
+.section-title { display: flex; align-items: baseline; gap: 10px; margin: 22px 0 10px; }
+.section-title h2 { margin: 0; font-size: 18px; }
+.section-title p { margin: 0; color: var(--ink2); font-size: 13px; }
+
+/* KPI */
+.kpi { position: relative; }
+.kpi .lbl { color: var(--ink2); font-size: 13px; font-weight: 600; }
+.kpi .num { font-size: 30px; font-weight: 700; line-height: 1.15; margin-top: 4px; font-variant-numeric: tabular-nums; }
+.kpi .hint { font-size: 12px; color: var(--ink3); margin-top: 2px; }
+.kpi.alert { border-color: #EBC3C3; background: linear-gradient(0deg, var(--bad-soft), var(--card) 70%); }
+.kpi.alert .num { color: var(--bad); }
+.kpi.attn { border-color: #EBD5A6; background: linear-gradient(0deg, var(--gold-soft), var(--card) 70%); }
+.kpi[data-goto] { cursor: pointer; }
+.kpi[data-goto]:hover { border-color: var(--primary-2); }
+
+/* خط البيانات */
+.pipe { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.pipe-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 12px; background: var(--soft); }
+.pipe-item b { display: block; font-size: 13px; }
+.pipe-item span { font-size: 12.5px; color: var(--ink2); }
+
+/* الرسوم */
+.chart { position: relative; width: 100%; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart .tip { position: absolute; pointer-events: none; background: #2E2140; color: #fff; padding: 6px 10px; border-radius: 8px; font-size: 12.5px; white-space: nowrap; transform: translate(50%, -110%); opacity: 0; transition: opacity .1s; z-index: 5; }
+.chart .tip.on { opacity: 1; }
+.axis-t { fill: var(--ink3); font-size: 11px; }
+.hbar { display: grid; grid-template-columns: minmax(110px, 38%) 1fr auto; gap: 10px; align-items: center; padding: 5px 0; font-size: 13.5px; }
+.hbar .bar { height: 10px; background: var(--soft); border-radius: 999px; overflow: hidden; }
+.hbar .bar span { display: block; height: 100%; background: var(--chart); border-radius: 999px; min-width: 3px; }
+.hbar .v { font-variant-numeric: tabular-nums; color: var(--ink2); font-size: 12.5px; min-width: 64px; text-align: left; }
+.hbar .n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.funnel .hbar .bar { height: 14px; }
+.funnel .hbar .bar span { background: linear-gradient(90deg, var(--chart), var(--primary-2)); }
+details.data { margin-top: 8px; font-size: 13px; }
+details.data summary { cursor: pointer; color: var(--ink2); }
+
+/* الجداول */
+.table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--line); background: var(--card); }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { padding: 9px 12px; text-align: start; border-bottom: 1px solid var(--line); vertical-align: middle; white-space: nowrap; }
+th { background: #FAF8FB; font-weight: 600; color: var(--ink2); font-size: 12.5px; position: sticky; top: 0; }
+tr:last-child td { border-bottom: 0; }
+tbody tr.click { cursor: pointer; }
+tbody tr.click:hover { background: #FBFAFC; }
+td.num { font-variant-numeric: tabular-nums; }
+td.wrap-cell { white-space: normal; min-width: 220px; }
+
+/* شارات */
+.tag { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+.tag.bad { background: var(--bad-soft); color: var(--bad); }
+.tag.warn { background: var(--warn-soft); color: var(--warn); }
+.tag.good { background: var(--good-soft); color: var(--good); }
+.tag.info { background: var(--info-soft); color: var(--info); }
+.tag.mute { background: var(--soft); color: var(--ink2); }
+
+/* الفلاتر */
+.filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+.chip { border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--ink2); }
+.chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+.chip .c { opacity: .75; margin-inline-start: 4px; }
+.search { flex: 1; min-width: 180px; max-width: 320px; border: 1px solid var(--line); border-radius: 10px; padding: 7px 12px; background: var(--card); }
+select.inp, input.inp, textarea.inp { border: 1px solid var(--line); border-radius: 9px; padding: 6px 10px; background: var(--card); }
+
+/* الاقتراحات */
+.sugs { display: grid; gap: 12px; }
+.sug { display: grid; grid-template-columns: 64px 1fr; gap: 14px; }
+.vote { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; background: var(--soft); border-radius: 12px; padding: 8px 4px; height: fit-content; }
+.vote b { font-size: 20px; line-height: 1; }
+.vote small { font-size: 11px; color: var(--ink2); }
+.vote .vbtns { display: flex; gap: 4px; margin-top: 4px; }
+.vote button { border: 1px solid var(--line); background: var(--card); border-radius: 7px; width: 24px; height: 24px; cursor: pointer; line-height: 1; padding: 0; }
+.sug-text { font-size: 15px; font-weight: 500; white-space: pre-wrap; margin: 0 0 8px; }
+.sug-meta { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; font-size: 12.5px; color: var(--ink2); margin-bottom: 10px; }
+.sug-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.sug-actions textarea { flex: 1; min-width: 200px; min-height: 36px; resize: vertical; font-size: 13px; }
+.st-new { border-inline-start: 4px solid var(--gold); }
+.st-released { opacity: .85; }
+
+/* البث */
+.feed { display: grid; gap: 2px; }
+.ev { display: grid; grid-template-columns: 74px 26px 1fr auto; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 10px; background: var(--card); border: 1px solid transparent; font-size: 13.5px; }
+.ev:hover { border-color: var(--line); }
+.ev time { color: var(--ink3); font-size: 12px; font-variant-numeric: tabular-nums; }
+.ev .ic { font-size: 16px; text-align: center; }
+.ev .what b { font-weight: 600; }
+.ev .what small { color: var(--ink3); margin-inline-start: 6px; }
+.ev.bad { background: var(--bad-soft); }
+
+/* درج تفاصيل المدرس */
+.drawer-bg { position: fixed; inset: 0; background: rgba(41,37,45,.35); z-index: 90; }
+.drawer { position: fixed; inset: 0 0 0 auto; width: min(560px, 100vw); background: var(--bg); z-index: 91; overflow-y: auto; box-shadow: -10px 0 40px rgba(0,0,0,.15); padding: 0 0 40px; }
+[dir="rtl"] .drawer { inset: 0 auto 0 0; box-shadow: 10px 0 40px rgba(0,0,0,.15); }
+.drawer-head { position: sticky; top: 0; background: var(--primary); color: #fff; padding: 14px 16px; display: flex; align-items: center; gap: 10px; z-index: 2; }
+.drawer-head h2 { margin: 0; font-size: 17px; flex: 1; }
+.drawer-head button { background: rgba(255,255,255,.15); border: 0; color: #fff; width: 34px; height: 34px; border-radius: 9px; cursor: pointer; font-size: 18px; }
+.drawer-body { padding: 14px 16px; display: grid; gap: 12px; }
+.mini { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.mini div { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 8px; text-align: center; }
+.mini b { display: block; font-size: 19px; }
+.mini span { font-size: 11.5px; color: var(--ink2); }
+
+/* الخريطة */
+.flow { display: grid; gap: 14px; }
+.flow-row { display: flex; flex-wrap: wrap; align-items: stretch; gap: 0; }
+.node { flex: 1 1 150px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px; min-width: 140px; position: relative; }
+.node .t { font-weight: 700; font-size: 13.5px; display: flex; gap: 6px; align-items: center; }
+.node .d { font-size: 12px; color: var(--ink2); margin-top: 4px; }
+.node .live { margin-top: 8px; font-size: 12.5px; font-weight: 600; color: var(--primary); }
+.node code { font-size: 11px; background: var(--soft); padding: 0 5px; border-radius: 5px; direction: ltr; unicode-bidi: isolate; }
+.arrow { display: grid; place-items: center; width: 28px; color: var(--ink3); font-size: 18px; flex-shrink: 0; }
+@media (max-width: 760px) { .flow-row { flex-direction: column; } .arrow { width: 100%; height: 22px; transform: rotate(-90deg); } }
+.gloss { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 6px 16px; font-size: 13px; }
+.gloss div { display: flex; gap: 8px; padding: 5px 0; border-bottom: 1px dashed var(--line); }
+.gloss code { font-size: 11.5px; color: var(--ink2); direction: ltr; unicode-bidi: isolate; min-width: 130px; }
+
+/* الدخول والحالات */
+.login { min-height: 100vh; display: grid; place-items: center; padding: 16px; }
+.login .card { width: min(400px, 100%); padding: 26px; }
+.login h1 { margin: 0 0 4px; font-size: 21px; }
+.login p { margin: 0 0 18px; color: var(--ink2); font-size: 14px; }
+.login label { display: block; font-weight: 600; font-size: 13px; margin: 12px 0 5px; }
+.login input { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 16px; background: #fff; }
+.login .btn { width: 100%; justify-content: center; margin-top: 18px; padding: 11px; font-size: 15px; }
+.err { background: var(--bad-soft); color: var(--bad); padding: 10px 12px; border-radius: 10px; font-size: 13.5px; margin-top: 12px; }
+.empty { text-align: center; color: var(--ink2); padding: 28px 12px; font-size: 14px; }
+.loading { text-align: center; color: var(--ink2); padding: 40px; }
+.loading::before { content: ''; display: block; width: 28px; height: 28px; margin: 0 auto 10px; border: 3px solid var(--line); border-top-color: var(--primary); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: #2E2140; color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 14px; z-index: 100; box-shadow: 0 8px 24px rgba(0,0,0,.2); }
+.note { background: var(--info-soft); color: var(--info); border-radius: 12px; padding: 10px 14px; font-size: 13.5px; margin-bottom: 14px; }
+@media (max-width: 600px) {
+    .top { position: static; }
+    .kpi .num { font-size: 25px; }
+    .sug { grid-template-columns: 1fr; }
+    .vote { flex-direction: row; justify-content: flex-start; gap: 10px; padding: 8px 12px; }
+    .vote .vbtns { margin: 0 auto 0 0; }
+    .ev { grid-template-columns: 60px 22px 1fr; }
+    .ev .who { grid-column: 3; font-size: 12px; color: var(--ink2); }
+}
+</style>
+</head>
+<body>
+
+<!-- ================= الدخول ================= -->
+<div id="view-login" class="login" hidden>
+    <form class="card" id="login-form" autocomplete="on">
+        <div class="brand" style="margin-bottom:14px"><span class="brand-ic">📊</span><span>Teachers Manager<small>لوحة المتابعة</small></span></div>
+        <h1>تسجيل الدخول</h1>
+        <p>نفس الحساب اللي بتدخلي بيه البرنامج. اللوحة بتفتح لحسابات الإدارة بس.</p>
+        <label for="l-email">البريد الإلكتروني</label>
+        <input id="l-email" type="email" dir="ltr" autocomplete="username" required>
+        <label for="l-pass">كلمة المرور</label>
+        <input id="l-pass" type="password" autocomplete="current-password" required>
+        <button class="btn solid" id="l-btn" type="submit">دخول</button>
+        <div class="err" id="l-err" hidden></div>
+    </form>
+</div>
+
+<!-- ================= اللوحة ================= -->
+<div id="view-app" hidden>
+    <header class="top">
+        <div class="top-in">
+            <div class="brand"><span class="brand-ic">📊</span><span>لوحة المتابعة<small id="who"></small></span></div>
+            <div class="top-actions">
+                <span class="pill" id="health-pill" title="حالة استقبال بيانات التتبع"><span class="dot"></span><span>...</span></span>
+                <select class="inp" id="range" aria-label="الفترة">
+                    <option value="7">آخر 7 أيام</option>
+                    <option value="14">آخر 14 يوم</option>
+                    <option value="30" selected>آخر 30 يوم</option>
+                    <option value="90">آخر 90 يوم</option>
+                </select>
+                <button class="btn" id="btn-refresh" type="button">↻ تحديث</button>
+                <a class="btn" id="btn-app" target="_blank" rel="noopener">البرنامج ↗</a>
+                <button class="btn" id="btn-logout" type="button">خروج</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="wrap">
+        <nav class="tabs" id="tabs" role="tablist">
+            <button data-tab="overview" class="active">📈 نظرة عامة</button>
+            <button data-tab="teachers">👩‍🏫 المدرسين <span class="cnt" id="cnt-risk" hidden></span></button>
+            <button data-tab="suggestions">💡 الاقتراحات <span class="cnt neutral" id="cnt-sug" hidden></span></button>
+            <button data-tab="problems">⚠️ المشاكل <span class="cnt" id="cnt-prob" hidden></span></button>
+            <button data-tab="usage">🧭 الاستخدام</button>
+            <button data-tab="live">🔴 مباشر</button>
+            <button data-tab="flow">🗺️ البيانات ماشية إزاي</button>
+        </nav>
+
+        <!-- نظرة عامة -->
+        <section class="panel active" id="p-overview"><div class="loading">جاري التحميل…</div></section>
+        <!-- المدرسين -->
+        <section class="panel" id="p-teachers">
+            <div class="filters" id="t-filters"></div>
+            <div id="t-list"><div class="loading">جاري التحميل…</div></div>
+        </section>
+        <!-- الاقتراحات -->
+        <section class="panel" id="p-suggestions">
+            <div class="filters" id="s-filters"></div>
+            <div id="s-list"><div class="loading">جاري التحميل…</div></div>
+        </section>
+        <!-- المشاكل -->
+        <section class="panel" id="p-problems"><div class="loading">جاري التحميل…</div></section>
+        <!-- الاستخدام -->
+        <section class="panel" id="p-usage"><div class="loading">جاري التحميل…</div></section>
+        <!-- مباشر -->
+        <section class="panel" id="p-live">
+            <div class="filters">
+                <select class="inp" id="live-only" aria-label="نوع الحدث"><option value="">كل الأحداث</option></select>
+                <label class="pill" style="cursor:pointer"><input type="checkbox" id="live-auto" checked> تحديث تلقائي</label>
+                <span class="pill" id="live-updated"></span>
+            </div>
+            <div id="live-list"><div class="loading">جاري التحميل…</div></div>
+        </section>
+        <!-- الخريطة -->
+        <section class="panel" id="p-flow"><div class="loading">جاري التحميل…</div></section>
+    </main>
+</div>
+
+<div id="drawer-root"></div>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+(() => {
+'use strict';
+const CFG = window.TM_DASH_CONFIG || {};
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = (v) => String(v == null ? '' : v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const nf = (n) => (n == null || n === '' || isNaN(Number(n))) ? '—' : Number(n).toLocaleString('ar-EG');
+
+if (!window.supabase || !CFG.SUPABASE_URL) {
+    document.body.innerHTML = '<div class="login"><div class="card"><h1>الصفحة ماتحمّلتش</h1><p>اتأكدي من النت وإن config.js موجود جنب index.html، وحمّلي تاني.</p></div></div>';
+    return;
+}
+const sb = window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY, { auth: { storageKey: 'tm-owner-dash-auth' } });
+
+// ============================================================ أسماء الأحداث بالعربي
+const EV = {
+    session_start: ['🚪', 'فتح البرنامج'], page_view: ['👀', 'فتح صفحة'], page_leave: ['↩️', 'خرج من صفحة'],
+    ui_click: ['👆', 'ضغط زرار'], rage_click: ['😤', 'ضغط متكرر بعصبية'], error_shown: ['⛔', 'ظهرت له رسالة خطأ'],
+    js_error: ['🐞', 'خطأ في الكود'], api_error: ['🔌', 'طلب فشل'], api_slow: ['🐢', 'طلب بطيء'],
+    lesson_started: ['▶️', 'بدأ حصة'], lesson_saved: ['✅', 'سجّل حصة'], lesson_discarded: ['🗑️', 'حذف حصة جارية'],
+    lesson_draft_recovered: ['🛟', 'رجّعنا له مكتوب كان هيضيع'], lesson_offline_open: ['📴', 'فتح الحصة من غير نت'],
+    lesson_book_opened: ['📖', 'فتح كتاب في الحصة'], lesson_pip_opened: ['🪟', 'نافذة فوق Zoom'],
+    absence_saved: ['🙋', 'سجّل غياب'], absence_undone: ['↶', 'تراجع عن غياب'],
+    ai_opened: ['✨', 'فتح المساعد'], ai_request: ['💬', 'سأل المساعد'], ai_reply_used: ['➕', 'استخدم رد المساعد'],
+    student_added: ['👤', 'أضاف طالب'], schedule_saved: ['🗓️', 'حفظ موعد'],
+    personal_event_added: ['📌', 'أضاف موعد شخصي'], personal_event_updated: ['📌', 'عدّل موعد شخصي'],
+    billing_enabled: ['💳', 'فعّل متابعة الدفع'], billing_action: ['💳', 'استخدم الدفع'],
+    payment_reminder_sent: ['📨', 'بعت تذكير دفع'], parent_report_sent: ['📄', 'بعت تقرير لولي الأمر'],
+    income_viewed: ['💰', 'شاف فلوس الشهر'], suggestion_sent: ['💡', 'بعت اقتراح'], pwa_installed: ['📲', 'ثبّت التطبيق'],
+    onboarding_step: ['🧭', 'خطوة في دليل البداية'], plan_click: ['⭐', 'ضغط على باقة'], sign_up: ['🎉', 'سجّل حساب'],
+    landing_cta: ['🔗', 'ضغط في صفحة التسويق']
+};
+const evIcon = (e) => (EV[e] || ['•'])[0];
+const evName = (e) => (EV[e] || [null, e])[1];
+const BAD_EVENTS = ['rage_click', 'error_shown', 'js_error', 'api_error', 'api_slow'];
+const PAGES = { dashboard: 'الرئيسية', lesson: 'الحصة', students: 'الطلاب', student: 'ملف الطالب', schedule: 'الجدول', books: 'المكتبة', settings: 'الإعدادات', subscription: 'الاشتراك', index: 'صفحة التسويق' };
+const pageName = (p) => PAGES[String(p || '').replace(/\.html$/, '')] || p || '—';
+const STATUS = {
+    new: ['جديد', 'warn'], planned: ['هيتعمل', 'info'], in_progress: ['بيتعمل', 'info'],
+    released: ['اتعمل ✓', 'good'], declined: ['مش هيتعمل', 'mute'], duplicate: ['مكرر', 'mute']
+};
+
+// ============================================================ الوقت
+function ago(t) {
+    if (!t) return 'أبدًا';
+    const s = (Date.now() - new Date(t).getTime()) / 1000;
+    if (s < 60) return 'دلوقتي';
+    if (s < 3600) return `من ${Math.round(s / 60)} د`;
+    if (s < 86400) return `من ${Math.round(s / 3600)} س`;
+    const d = Math.round(s / 86400);
+    return d === 1 ? 'امبارح' : d === 2 ? 'من يومين' : `من ${d} يوم`;
+}
+const fmtDate = (t) => t ? new Date(t).toLocaleDateString('ar-EG', { day: 'numeric', month: 'short' }) : '—';
+const fmtTime = (t) => t ? new Date(t).toLocaleTimeString('ar-EG', { hour: 'numeric', minute: '2-digit' }) : '';
+
+// ============================================================ الاتصال
+let state = { days: 30, overview: null, teachers: null, suggestions: null, health: null, feed: null, tFilter: 'risk', tSearch: '', sFilter: 'open' };
+
+async function call(section, extra = {}) {
+    const { data } = await sb.auth.getSession();
+    const token = data && data.session ? data.session.access_token : null;
+    if (!token) { showLogin(); throw new Error('AUTH'); }
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), 30000);
+    let res;
+    try {
+        res = await fetch(CFG.ENDPOINT, {
+            method: 'POST', signal: ctl.signal,
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ section, days: state.days, ...extra })
+        });
+    } catch (e) {
+        throw new Error(e.name === 'AbortError' ? 'الخادم اتأخر في الرد. جرّبي تاني.' : 'مقدرناش نوصل لـ n8n. اتأكدي من النت ومن رابط ENDPOINT في config.js.');
+    } finally { clearTimeout(timer); }
+    if (res.status === 404) throw new Error('workflow "owner-dashboard" مش متفعّل في n8n (404).');
+    let body = null;
+    try { body = await res.json(); } catch (e) { /* تجاهل */ }
+    if (res.status === 401) { await sb.auth.signOut(); showLogin('انتهت الجلسة، ادخلي تاني.'); throw new Error('AUTH'); }
+    if (res.status === 403 || (body && body.error && body.error.code === 'FORBIDDEN')) {
+        await sb.auth.signOut();
+        showLogin('الحساب ده مش من حسابات الإدارة. ضيفيه في جدول app_admins (الشرح في README).');
+        throw new Error('AUTH');
+    }
+    if (!body || !body.success) throw new Error((body && body.error && body.error.message) || `حصل خطأ (${res.status})`);
+    return body.data;
+}
+
+function toast(msg) {
+    const t = document.createElement('div');
+    t.className = 'toast'; t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 2600);
+}
+const errBox = (msg) => `<div class="card"><div class="err" style="margin:0">⚠️ ${esc(msg)}</div><p class="sub" style="margin-top:10px">لو المشكلة مستمرة: اتأكدي إن ملف OWNER_DASHBOARD.sql اتشغّل، وإن workflow owner-dashboard متفعّل.</p></div>`;
+
+// ============================================================ رسوم (SVG بسيطة + تلميح عند المرور)
+function lineChart(points, { label, color = 'var(--chart)', area = true, bars = false } = {}) {
+    const W = 640, H = 200, pl = 34, pr = 10, pt = 12, pb = 26;
+    const n = points.length;
+    if (!n) return '<div class="empty">لسه مفيش بيانات</div>';
+    const max = Math.max(1, ...points.map((p) => p.v));
+    const niceMax = max <= 4 ? 4 : Math.ceil(max / 4) * 4;   // نص الرقم صحيح دايمًا
+    const x = (i) => pl + (n === 1 ? (W - pl - pr) / 2 : (i * (W - pl - pr)) / (n - 1));
+    const y = (v) => pt + (H - pt - pb) * (1 - v / niceMax);
+    const grid = [0, .5, 1].map((f) => {
+        const v = Math.round(niceMax * f); const yy = y(v);
+        return `<line x1="${pl}" x2="${W - pr}" y1="${yy}" y2="${yy}" stroke="var(--grid)" stroke-width="1"/><text class="axis-t" x="${pl - 6}" y="${yy + 4}" text-anchor="end">${nf(v)}</text>`;
+    }).join('');
+    const step = Math.max(1, Math.ceil(n / 7));
+    const xl = points.map((p, i) => (i % step === 0 || i === n - 1) ? `<text class="axis-t" x="${x(i)}" y="${H - 6}" text-anchor="middle">${esc(p.l)}</text>` : '').join('');
+    let marks;
+    if (bars) {
+        const bw = Math.max(3, Math.min(18, ((W - pl - pr) / n) - 3));
+        marks = points.map((p, i) => {
+            const h = Math.max(p.v > 0 ? 2 : 0, H - pb - y(p.v));
+            return `<rect x="${x(i) - bw / 2}" y="${H - pb - h}" width="${bw}" height="${h}" rx="${Math.min(4, bw / 2)}" fill="${color}"/>`;
+        }).join('');
+    } else {
+        const d = points.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(p.v).toFixed(1)}`).join('');
+        const a = area ? `<path d="${d}L${x(n - 1)},${H - pb}L${x(0)},${H - pb}Z" fill="${color}" opacity=".08"/>` : '';
+        marks = `${a}<path d="${d}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    }
+    const hits = points.map((p, i) => `<rect class="hit" data-i="${i}" x="${x(i) - (W - pl - pr) / n / 2}" y="${pt}" width="${(W - pl - pr) / n}" height="${H - pt - pb}" fill="transparent"/>`).join('');
+    const id = 'c' + Math.random().toString(36).slice(2, 8);
+    setTimeout(() => {
+        const box = document.getElementById(id);
+        if (!box) return;
+        const tip = box.querySelector('.tip'); const svg = box.querySelector('svg');
+        const cross = svg.querySelector('.cross'); const dotEl = svg.querySelector('.hdot');
+        box.querySelectorAll('.hit').forEach((h) => {
+            const show = () => {
+                const i = Number(h.dataset.i); const p = points[i];
+                const r = svg.getBoundingClientRect(); const sx = r.width / W;
+                tip.innerHTML = `<b>${nf(p.v)}</b> ${esc(label)} · ${esc(p.full || p.l)}`;
+                tip.style.left = `${x(i) * sx}px`; tip.style.top = `${y(p.v) * sx}px`;
+                tip.classList.add('on');
+                cross.setAttribute('x1', x(i)); cross.setAttribute('x2', x(i)); cross.style.opacity = 1;
+                if (!bars) { dotEl.setAttribute('cx', x(i)); dotEl.setAttribute('cy', y(p.v)); dotEl.style.opacity = 1; }
+            };
+            h.addEventListener('mouseenter', show); h.addEventListener('touchstart', show, { passive: true });
+        });
+        svg.addEventListener('mouseleave', () => { tip.classList.remove('on'); cross.style.opacity = 0; dotEl.style.opacity = 0; });
+    }, 0);
+    return `<div class="chart" id="${id}"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)}">${grid}
+        <line class="cross" y1="${pt}" y2="${H - pb}" stroke="var(--ink3)" stroke-dasharray="3 3" style="opacity:0"/>
+        ${marks}<circle class="hdot" r="4.5" fill="${color}" stroke="#fff" stroke-width="2" style="opacity:0"/>${xl}${hits}</svg><div class="tip"></div></div>`;
+}
+function hbars(rows, { fmt = nf, total = null } = {}) {
+    if (!rows.length) return '<div class="empty">لسه مفيش بيانات</div>';
+    const max = total || Math.max(1, ...rows.map((r) => r.v));
+    return rows.map((r) => `<div class="hbar" title="${esc(r.title || '')}"><span class="n">${r.n}</span>
+        <span class="bar"><span style="width:${Math.max(1, Math.round((r.v / max) * 100))}%"></span></span>
+        <span class="v">${fmt(r.v)}${r.extra ? ` <small>${r.extra}</small>` : ''}</span></div>`).join('');
+}
+const src = (txt) => `<div class="src">ℹ️ <span>${txt}</span></div>`;
+
+// ============================================================ نظرة عامة
+function renderOverview() {
+    const o = state.overview; if (!o) return;
+    const k = o.kpis || {}; const p = o.pipeline || {};
+    const tiles = [
+        { l: 'محتاجين متابعة', v: k.at_risk, h: 'ممكن يمشوا ← كلّميهم', cls: k.at_risk ? 'alert' : '', go: 'teachers', s: '<code>v_churn_risk</code>' },
+        { l: 'اقتراحات جديدة', v: k.suggestions_new, h: 'لسه ماتراجعتش', cls: k.suggestions_new ? 'attn' : '', go: 'suggestions', s: '<code>feature_suggestions</code>' },
+        { l: 'مشاكل آخر 7 أيام', v: k.problems_7d, h: 'أخطاء وضغط بعصبية', cls: k.problems_7d > 20 ? 'alert' : '', go: 'problems', s: 'أحداث الأخطاء في <code>app_events</code>' },
+        { l: 'كل المدرسين', v: k.teachers_total, h: `+${nf(k.new_7d)} الأسبوع ده`, s: '<code>profiles</code>' },
+        { l: 'نشطين النهارده', v: k.active_today, h: `${nf(k.active_7d)} في 7 أيام · ${nf(k.active_30d)} في 30`, s: 'مدرس فتح البرنامج (<code>app_events</code>)' },
+        { l: 'حصص اتسجلت (7 أيام)', v: k.lessons_7d, h: 'من جدول الحصص', s: '<code>lessons</code> (status = completed)' },
+        { l: 'أسئلة للمساعد (7 أيام)', v: k.ai_7d, h: 'ai_request', s: '<code>app_events</code>' }
+    ];
+    const daily = (o.daily || []).map((d) => ({ l: new Date(d.day).toLocaleDateString('ar-EG', { day: 'numeric', month: 'numeric' }), full: new Date(d.day).toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long' }), v: Number(d.active) || 0, lessons: Number(d.lessons) || 0, events: Number(d.events) || 0 }));
+    const f = o.funnel || {};
+    const funnel = [
+        { n: 'سجّلوا حساب', v: Number(f.teachers) || 0 }, { n: 'أضافوا طالب', v: Number(f.with_student) || 0 },
+        { n: 'حدّدوا موعد', v: Number(f.with_schedule) || 0 }, { n: 'سجّلوا أول حصة', v: Number(f.with_lesson) || 0 },
+        { n: 'رجعوا 3 أيام أو أكتر', v: Number(f.active_3_days) || 0 }
+    ];
+    const subNames = { trial: 'فترة مجانية/تجربة', active: 'مشترك', expired: 'منتهي', cancelled: 'ملغي', none: 'من غير اشتراك' };
+    const subs = Object.entries(o.subscriptions || {}).map(([s, v]) => ({ n: subNames[s] || s, v: Number(v) || 0 })).sort((a, b) => b.v - a.v);
+    const feats = (o.features || []).slice(0, 12).map((x) => ({ n: `${evIcon(x.event)} ${esc(evName(x.event))}`, v: Number(x.times) || 0, extra: `· ${nf(x.teachers)} مدرس` }));
+
+    $('#p-overview').innerHTML = `
+        <div class="grid g-kpi">${tiles.map((t) => `<div class="card kpi ${t.cls || ''}" ${t.go ? `data-goto="${t.go}"` : ''}>
+            <div class="lbl">${t.l}</div><div class="num">${nf(t.v)}</div><div class="hint">${t.h}</div>${src(t.s)}</div>`).join('')}</div>
+
+        <div class="section-title"><h2>خط البيانات</h2><p>بيوريكي إن التتبع شغال والبيانات بتوصل</p></div>
+        <div class="card"><div class="pipe">
+            ${pipeItem(p.last_event_at, 'آخر حدث وصل', ago(p.last_event_at), 'من البرنامج ← n8n ← app_events')}
+            <div class="pipe-item"><span class="dot ok" style="margin-top:6px"></span><div><b>${nf(p.events_24h)} حدث · ${nf(p.teachers_24h)} مدرس</b><span>آخر 24 ساعة</span></div></div>
+            <div class="pipe-item"><span class="dot" style="margin-top:6px"></span><div><b>التتبع شغال من ${fmtDate(p.tracking_since)}</b><span>${p.tracking_since ? ago(p.tracking_since) : 'لسه ماوصلش حاجة'}</span></div></div>
+            <div class="pipe-item"><span class="dot" style="margin-top:6px"></span><div><b>آخر اقتراح ${ago(p.last_suggestion_at)}</b><span>زرار "عندك اقتراح؟"</span></div></div>
+        </div></div>
+
+        <div class="grid g-2" style="margin-top:14px">
+            <div class="card"><h3>المدرسين النشطين كل يوم</h3><p class="sub">عدد المدرسين اللي فتحوا البرنامج (بتوقيت مصر)</p>
+                ${lineChart(daily, { label: 'مدرس' })}
+                <details class="data"><summary>الأرقام</summary>${dailyTable(daily)}</details>
+                ${src('عدد المدرسين المختلفين في <code>app_events</code> لكل يوم')}</div>
+            <div class="card"><h3>الحصص المتسجلة كل يوم</h3><p class="sub">أهم مقياس: البرنامج بيتستخدم فعلًا في الشغل</p>
+                ${lineChart(daily.map((d) => ({ ...d, v: d.lessons })), { label: 'حصة', bars: true, color: 'var(--chart-2)' })}
+                ${src('<code>lessons</code> اللي حالتها completed حسب تاريخ الحصة')}</div>
+        </div>
+
+        <div class="grid g-3" style="margin-top:14px">
+            <div class="card funnel"><h3>قمع البداية</h3><p class="sub">المدرس بيقف فين في أول استخدام؟</p>
+                ${hbars(funnel, { total: Math.max(1, funnel[0].v), fmt: (v) => `${nf(v)} (${funnel[0].v ? Math.round((v / funnel[0].v) * 100) : 0}%)` })}
+                ${src('<code>v_onboarding_funnel</code>: من الجداول الأساسية + التتبع')}</div>
+            <div class="card"><h3>أكتر الميزات استخدامًا</h3><p class="sub">آخر ${state.days} يوم</p>${hbars(feats)}${src('أحداث <code>app_events</code> (من غير فتح الصفحات والضغطات)')}</div>
+            <div class="card"><h3>الاشتراكات</h3><p class="sub">حالة كل المدرسين دلوقتي</p>${hbars(subs)}${src('<code>subscriptions.status</code>')}</div>
+        </div>`;
+    $$('#p-overview [data-goto]').forEach((el) => el.addEventListener('click', () => switchTab(el.dataset.goto)));
+    updateHealthPill();
+}
+function pipeItem(t, title, sub, hint) {
+    const age = t ? (Date.now() - new Date(t).getTime()) / 3600000 : Infinity;
+    const cls = age < 6 ? 'ok' : age < 48 ? 'warn' : 'bad';
+    return `<div class="pipe-item" title="${esc(hint)}"><span class="dot ${cls}" style="margin-top:6px"></span><div><b>${title}: ${sub}</b><span>${cls === 'bad' ? 'مفيش بيانات بتوصل! راجعي workflow track-events' : cls === 'warn' ? 'هادي شوية' : 'شغال ✓'}</span></div></div>`;
+}
+function dailyTable(rows) {
+    return `<div class="table-wrap" style="margin-top:8px;max-height:240px"><table><thead><tr><th>اليوم</th><th>مدرسين نشطين</th><th>حصص</th><th>أحداث</th></tr></thead><tbody>
+        ${rows.slice().reverse().map((r) => `<tr><td>${esc(r.full)}</td><td class="num">${nf(r.v)}</td><td class="num">${nf(r.lessons)}</td><td class="num">${nf(r.events)}</td></tr>`).join('')}</tbody></table></div>`;
+}
+function updateHealthPill() {
+    const p = (state.overview && state.overview.pipeline) || {};
+    const age = p.last_event_at ? (Date.now() - new Date(p.last_event_at).getTime()) / 3600000 : Infinity;
+    const cls = age < 6 ? 'ok' : age < 48 ? 'warn' : 'bad';
+    $('#health-pill').innerHTML = `<span class="dot ${cls}"></span><span>${p.last_event_at ? `آخر نشاط ${ago(p.last_event_at)}` : 'مفيش أحداث لسه'}</span>`;
+    const k = (state.overview && state.overview.kpis) || {};
+    setCnt('#cnt-risk', k.at_risk); setCnt('#cnt-sug', k.suggestions_new); setCnt('#cnt-prob', k.problems_7d);
+}
+function setCnt(sel, v) { const el = $(sel); el.hidden = !Number(v); el.textContent = nf(v); }
+
+// ============================================================ المدرسين
+const T_FILTERS = [
+    ['risk', 'محتاجين متابعة', (t) => !!t.risk_reason],
+    ['active', 'نشطين الأسبوع ده', (t) => Number(t.active_days_7d) > 0],
+    ['new', 'جداد (14 يوم)', (t) => t.created_at && (Date.now() - new Date(t.created_at)) < 14 * 864e5],
+    ['nolesson', 'ماسجّلوش حصص', (t) => !Number(t.lessons_total)],
+    ['all', 'الكل', () => true]
+];
+function waLink(phone, text) {
+    let d = String(phone || '').replace(/[٠-٩]/g, (c) => c.charCodeAt(0) - 1632).replace(/[^\d+]/g, '');
+    if (d.startsWith('+')) d = d.slice(1); else if (d.startsWith('00')) d = d.slice(2);
+    else if (/^01\d{9}$/.test(d)) d = '20' + d.slice(1); else if (/^1[0125]\d{8}$/.test(d)) d = '20' + d;
+    return d.length >= 8 ? `https://wa.me/${d}?text=${encodeURIComponent(text || '')}` : null;
+}
+function riskMessage(t) {
+    const first = String(t.name || '').split(' ')[0] || '';
+    const r = t.risk_reason || '';
+    if (/مختفي|ما فتحش/.test(r)) return `أهلًا يا ${first} 🌷 معاكي تسنيم من Teachers Manager. لاحظت إنك مافتحتيش البرنامج من فترة، كل حاجة تمام؟ لو فيه أي حاجة صعبة أو ناقصة قوليلي وأنا أظبطها لك 🙏`;
+    if (/أخطاء/.test(r)) return `أهلًا يا ${first} 🌷 معاكي تسنيم من Teachers Manager. شايفة إن البرنامج عمل معاكي مشاكل الأيام اللي فاتت، آسفة جدًا! ممكن تقوليلي حصل إيه بالظبط عشان أصلّحه فورًا؟`;
+    if (/مابيسجلش/.test(r)) return `أهلًا يا ${first} 🌷 معاكي تسنيم من Teachers Manager. تحبي أوريكي في دقيقتين إزاي تسجّلي الحصة وإنتي بتشرحي؟ بتوفر وقت كبير في المتابعة والتقارير 🙏`;
+    return `أهلًا يا ${first} 🌷 معاكي تسنيم من Teachers Manager. حابة أطمن عليكي وأسمع رأيك في البرنامج 🙏`;
+}
+function riskTag(r) {
+    if (!r) return '<span class="tag good">تمام</span>';
+    const cls = /أسبوعين|ما فتحش|أخطاء/.test(r) ? 'bad' : 'warn';
+    return `<span class="tag ${cls}">${esc(r)}</span>`;
+}
+function renderTeachers() {
+    const list = state.teachers;
+    if (!list) return;
+    const counts = Object.fromEntries(T_FILTERS.map(([k, , fn]) => [k, list.filter(fn).length]));
+    // أول فتح: لو مفيش حد محتاج متابعة نعرض الكل بدل قايمة فاضية
+    if (!state.tTouched && state.tFilter === 'risk' && !counts.risk) state.tFilter = 'all';
+    $('#t-filters').innerHTML = T_FILTERS.map(([k, l]) => `<button class="chip ${state.tFilter === k ? 'active' : ''}" data-f="${k}">${l}<span class="c">${nf(counts[k])}</span></button>`).join('')
+        + `<input class="search" id="t-search" type="search" placeholder="ابحثي باسم المدرس أو رقمه…" value="${esc(state.tSearch)}">`;
+    const fn = (T_FILTERS.find(([k]) => k === state.tFilter) || T_FILTERS[4])[2];
+    const q = state.tSearch.trim().toLowerCase();
+    const rows = list.filter(fn).filter((t) => !q || String(t.name || '').toLowerCase().includes(q) || String(t.phone || '').includes(q));
+    $('#t-list').innerHTML = !rows.length ? '<div class="card empty">مفيش مدرسين في القايمة دي 🎉</div>' : `
+        <div class="table-wrap"><table><thead><tr>
+            <th>المدرس</th><th>الحالة</th><th>آخر ظهور</th><th>أيام نشاط (7/30)</th><th>طلاب</th><th>حصص (30 يوم/الكل)</th><th>المساعد</th><th>مشاكل 7 أيام</th><th>اشتراك</th><th></th>
+        </tr></thead><tbody>${rows.map((t) => {
+            const wa = waLink(t.phone, riskMessage(t));
+            return `<tr class="click" data-id="${esc(t.id)}">
+                <td><b>${esc(t.name || '—')}</b>${t.uses_installed_app ? ' <span title="بيستخدم التطبيق المثبّت">📲</span>' : ''}<br><small style="color:var(--ink3)">انضم ${fmtDate(t.created_at)}</small></td>
+                <td>${riskTag(t.risk_reason)}</td>
+                <td>${esc(ago(t.last_seen))}</td>
+                <td class="num">${nf(t.active_days_7d)} / ${nf(t.active_days_30d)}</td>
+                <td class="num">${nf(t.students)}</td>
+                <td class="num">${nf(t.lessons_saved_30d)} / ${nf(t.lessons_total)}</td>
+                <td class="num">${nf(t.ai_requests_30d)}</td>
+                <td class="num">${Number(t.frustration_7d) ? `<span class="tag bad">${nf(t.frustration_7d)}</span>` : '—'}</td>
+                <td>${esc(t.subscription || '—')}</td>
+                <td>${wa ? `<a class="btn sm wa" href="${wa}" target="_blank" rel="noopener" data-stop>واتساب</a>` : ''}</td></tr>`;
+        }).join('')}</tbody></table></div>
+        ${src('<code>v_teacher_activity</code> + <code>v_churn_risk</code> + الطلاب والحصص والاشتراكات. رسالة الواتساب بتتكتب حسب سبب المتابعة وتقدري تعدّليها قبل الإرسال.')}`;
+    $$('#t-filters .chip').forEach((b) => b.addEventListener('click', () => { state.tFilter = b.dataset.f; state.tTouched = true; renderTeachers(); }));
+    const s = $('#t-search');
+    s.addEventListener('input', () => { state.tSearch = s.value; const pos = s.selectionStart; renderTeachers(); const n = $('#t-search'); n.focus(); n.setSelectionRange(pos, pos); });
+    $$('#t-list tr.click').forEach((tr) => tr.addEventListener('click', (e) => { if (e.target.closest('[data-stop]')) return; openTeacher(tr.dataset.id); }));
+}
+
+async function openTeacher(id) {
+    const t = (state.teachers || []).find((x) => String(x.id) === String(id)) || {};
+    const root = $('#drawer-root');
+    root.innerHTML = `<div class="drawer-bg" data-close></div><aside class="drawer" role="dialog" aria-label="تفاصيل المدرس">
+        <div class="drawer-head"><h2>${esc(t.name || 'مدرس')}</h2><button data-close aria-label="إغلاق">✕</button></div>
+        <div class="drawer-body" id="d-body"><div class="loading">جاري التحميل…</div></div></aside>`;
+    const close = () => { root.innerHTML = ''; document.removeEventListener('keydown', onKey); };
+    const onKey = (e) => { if (e.key === 'Escape') close(); };
+    document.addEventListener('keydown', onKey);
+    $$('[data-close]', root).forEach((b) => b.addEventListener('click', close));
+    try {
+        const d = await call('teacher', { teacher_id: id });
+        const pr = d.profile || {};
+        const wa = waLink(pr.phone || t.phone, riskMessage(t));
+        const evs = d.events || [];
+        // تجميع الأحداث حسب اليوم
+        const byDay = {};
+        evs.forEach((e) => { const k = new Date(e.at).toDateString(); (byDay[k] = byDay[k] || []).push(e); });
+        $('#d-body').innerHTML = `
+            <div class="card"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">${riskTag(t.risk_reason)}
+                <span class="tag mute">${esc(pr.subject || t.subject || 'بدون مادة')}</span>
+                <span class="tag mute">انضم ${fmtDate(pr.created_at || t.created_at)}</span>
+                ${wa ? `<a class="btn sm wa" href="${wa}" target="_blank" rel="noopener" style="margin-inline-start:auto">واتساب</a>` : ''}</div>
+                <div class="mini" style="margin-top:12px">
+                    <div><b>${nf(t.students)}</b><span>طلاب</span></div><div><b>${nf(t.schedules)}</b><span>مواعيد</span></div><div><b>${nf(t.lessons_total)}</b><span>حصص متسجلة</span></div>
+                    <div><b>${nf(t.active_days_30d)}</b><span>أيام نشاط (30)</span></div><div><b>${nf(t.ai_requests_30d)}</b><span>أسئلة للمساعد</span></div><div><b>${nf(t.books_opened_30d)}</b><span>كتب اتفتحت</span></div>
+                </div></div>
+            <div class="card"><h3>بيستخدم إيه (30 يوم)</h3>${hbars((d.features || []).map((x) => ({ n: `${evIcon(x.event)} ${esc(evName(x.event))}`, v: Number(x.times) || 0 })))}</div>
+            ${(d.suggestions || []).length ? `<div class="card"><h3>اقتراحاته</h3>${d.suggestions.map((s) => `<p style="margin:6px 0"><span class="tag ${STATUS[s.status] ? STATUS[s.status][1] : 'mute'}">${STATUS[s.status] ? STATUS[s.status][0] : esc(s.status)}</span> ${esc(s.suggestion)}</p>`).join('')}</div>` : ''}
+            <div class="card"><h3>آخر اللي عمله</h3><p class="sub">آخر ${nf(evs.length)} حدث</p>
+                ${!evs.length ? '<div class="empty">مفيش أحداث متسجلة للمدرس ده لسه</div>' : Object.entries(byDay).map(([k, list]) => `
+                    <div style="font-weight:700;font-size:13px;margin:12px 0 4px;color:var(--ink2)">${new Date(k).toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
+                    <div class="feed">${list.map((e) => evRow(e, false)).join('')}</div>`).join('')}</div>`;
+    } catch (e) {
+        if (e.message !== 'AUTH') $('#d-body').innerHTML = errBox(e.message);
+    }
+}
+
+// ============================================================ الاقتراحات
+const S_FILTERS = [['open', 'محتاجة قرار', (s) => ['new', 'planned', 'in_progress'].includes(s.status)], ['new', 'جديد'], ['planned', 'هيتعمل'], ['in_progress', 'بيتعمل'], ['released', 'اتعمل'], ['declined', 'مش هيتعمل'], ['duplicate', 'مكرر'], ['all', 'الكل', () => true]];
+const sFilterFn = (k) => { const f = S_FILTERS.find(([x]) => x === k); return (f && f[2]) || ((s) => s.status === k); };
+function renderSuggestions() {
+    const list = state.suggestions; if (!list) return;
+    $('#s-filters').innerHTML = S_FILTERS.map(([k, l]) => `<button class="chip ${state.sFilter === k ? 'active' : ''}" data-f="${k}">${l}<span class="c">${nf(list.filter(sFilterFn(k)).length)}</span></button>`).join('');
+    const rows = list.filter(sFilterFn(state.sFilter));
+    $('#s-list').innerHTML = !rows.length ? '<div class="card empty">مفيش اقتراحات هنا</div>' : `<div class="sugs">${rows.map((s) => {
+        const st = STATUS[s.status] || [s.status, 'mute'];
+        const active = Number(s.teacher_active_days_30d) || 0;
+        const doneWa = s.status === 'released' && waLink(s.teacher_phone, `أهلًا يا ${String(s.teacher_name || '').split(' ')[0]} 🌷 اقتراحك "${String(s.suggestion).slice(0, 80)}" اتنفذ في Teachers Manager 🎉 شكرًا إنك بتساعدينا نحسّن البرنامج 🙏`);
+        return `<div class="card sug st-${esc(s.status)}" data-id="${esc(s.id)}">
+            <div class="vote"><b>${nf(s.votes)}</b><small>صوت</small><div class="vbtns"><button data-v="1" title="مدرس تاني طلب نفس الحاجة">+</button><button data-v="-1" title="شيل صوت">−</button></div></div>
+            <div style="min-width:0">
+                <p class="sug-text">${esc(s.suggestion)}</p>
+                <div class="sug-meta"><span class="tag ${st[1]}">${esc(st[0])}</span>
+                    <span>👩‍🏫 ${esc(s.teacher_name || 'مجهول')}${s.allow_name ? '' : ' <small>(مش عايز اسمه يظهر)</small>'}</span>
+                    <span title="نشاط المدرس صاحب الاقتراح">${active >= 8 ? '🔥 نشيط جدًا' : active >= 3 ? '✓ نشيط' : '💤 قليل النشاط'} · ${nf(s.teacher_lessons_30d)} حصة/30 يوم</span>
+                    <span>📍 ${esc(pageName(s.page))}</span><span>🕒 ${esc(ago(s.created_at))}</span>
+                    ${s.released_at ? `<span>🎉 اتنفذ ${fmtDate(s.released_at)}</span>` : ''}</div>
+                <div class="sug-actions">
+                    <select class="inp" data-status aria-label="الحالة">${Object.entries(STATUS).map(([k, v]) => `<option value="${k}" ${k === s.status ? 'selected' : ''}>${v[0]}</option>`).join('')}</select>
+                    <textarea class="inp" data-note rows="1" placeholder="ملاحظة ليكي (مش بتظهر للمدرس)…">${esc(s.admin_note || '')}</textarea>
+                    <button class="btn sm solid" data-save>حفظ</button>
+                    ${doneWa ? `<a class="btn sm wa" href="${doneWa}" target="_blank" rel="noopener">بلّغيه إنه اتنفذ 🎉</a>` : ''}
+                </div></div></div>`;
+    }).join('')}</div>
+    ${src('<code>feature_suggestions</code> + نشاط صاحب الاقتراح من <code>v_teacher_activity</code>. الترتيب: الجديد الأول ثم الأكتر أصوات.')}`;
+    $$('#s-filters .chip').forEach((b) => b.addEventListener('click', () => { state.sFilter = b.dataset.f; renderSuggestions(); }));
+    $$('#s-list .sug').forEach((card) => {
+        const id = card.dataset.id; const s = list.find((x) => String(x.id) === id);
+        const save = async (patch, btn) => {
+            if (btn) btn.disabled = true;
+            try {
+                const r = await call('update_suggestion', { id, ...patch });
+                Object.assign(s, (r && r.suggestion) || patch);
+                toast('اتحفظ ✓');
+                if (state.overview) { try { state.overview = await call('overview'); updateHealthPill(); } catch (e) { /* تجاهل */ } }
+                renderSuggestions();
+            } catch (e) { if (e.message !== 'AUTH') toast(e.message); if (btn) btn.disabled = false; }
+        };
+        $$('[data-v]', card).forEach((b) => b.addEventListener('click', () => save({ votes: Math.max(1, (Number(s.votes) || 1) + Number(b.dataset.v)) }, b)));
+        $('[data-save]', card).addEventListener('click', (e) => save({ status: $('[data-status]', card).value, admin_note: $('[data-note]', card).value }, e.currentTarget));
+    });
+}
+
+// ============================================================ المشاكل
+function renderProblems() {
+    const h = state.health; if (!h) return;
+    const fr = h.frustration || [];
+    const kind = { error_shown: ['⛔', 'رسالة خطأ ظهرت'], js_error: ['🐞', 'خطأ في الكود'], rage_click: ['😤', 'ضغط بعصبية'], api_error: ['🔌', 'طلب فشل'], api_slow: ['🐢', 'طلب بطيء'] };
+    $('#p-problems').innerHTML = `
+        <div class="note">كل سطر هنا = حاجة ضايقت مدرس فعلًا. ابدئي باللي <b>عدد المدرسين</b> فيه أكبر. ولو مش فاهمة سطر، ابعتيه زي ما هو للمطوّر.</div>
+        <div class="card"><h3>إشارات الإحباط (آخر 7 أيام)</h3><p class="sub">مترتبة بعدد المدرسين اللي اتأثروا</p>
+        ${!fr.length ? '<div class="empty">مفيش مشاكل متسجلة الأسبوع ده 🎉</div>' : `<div class="table-wrap"><table><thead><tr><th>النوع</th><th>الصفحة</th><th>التفاصيل</th><th>كود</th><th>مرات</th><th>مدرسين</th><th>متوسط الوقت</th></tr></thead><tbody>
+            ${fr.map((r) => `<tr><td>${(kind[r.event] || ['•', r.event]).join(' ')}</td><td>${esc(pageName(r.page))}</td><td class="wrap-cell">${esc(r.detail || '—')}</td><td>${esc(r.code || '')}</td>
+                <td class="num">${nf(r.times)}</td><td class="num"><b>${nf(r.teachers)}</b></td><td class="num">${r.avg_ms ? `${(r.avg_ms / 1000).toLocaleString('ar-EG', { maximumFractionDigits: 1 })} ث` : '—'}</td></tr>`).join('')}</tbody></table></div>`}
+        ${src('<code>v_frustration_7d</code>: أحداث error_shown و js_error و rage_click و api_error و api_slow')}</div>
+        <div class="card" style="margin-top:14px"><h3>الطلبات البطيئة أو الفاشلة حسب الخدمة</h3><p class="sub">"بطيء" = أكتر من 4 ثواني. ده اللي بيخلّي المدرس يستنى</p>
+        ${hbars((h.slow_endpoints || []).map((x) => ({ n: `<code style="direction:ltr">${esc(x.endpoint || '?')}</code>`, v: Number(x.times) || 0, extra: `· ${x.avg_ms ? `${(x.avg_ms / 1000).toFixed(1)} ث` : ''}${Number(x.errors) ? ` · ${nf(x.errors)} فشل` : ''} · ${nf(x.teachers)} مدرس` })))}
+        ${src('أحداث api_slow و api_error من <code>app_events</code>')}</div>`;
+}
+
+// ============================================================ الاستخدام
+function renderUsage() {
+    const h = state.health; const o = state.overview; if (!h) return;
+    const pages = h.pages || []; const clicks = h.clicks || [];
+    const devNames = { mobile: '📱 موبايل', tablet: '📟 تابلت', desktop: '💻 كمبيوتر' };
+    const devs = Object.entries(h.devices || {}).map(([k, v]) => ({ n: devNames[k] || k, v: Number(v) || 0 }));
+    const total30 = (o && o.kpis && o.kpis.active_30d) || 0;
+    $('#p-usage').innerHTML = `
+        <div class="grid g-2">
+            <div class="card"><h3>الوقت في كل صفحة (30 يوم)</h3><p class="sub">الوسيط = الوقت المعتاد. لو صفحة مهمة وقتها قليل جدًا يبقى المدرسين بيخرجوا منها بسرعة</p>
+            ${!pages.length ? '<div class="empty">لسه مفيش بيانات</div>' : `<div class="table-wrap"><table><thead><tr><th>الصفحة</th><th>زيارات</th><th>الوقت المعتاد</th><th>المتوسط</th><th>نزل لحد</th></tr></thead><tbody>
+                ${pages.map((p) => `<tr><td>${esc(pageName(p.page))}</td><td class="num">${nf(p.visits)}</td><td class="num"><b>${dur(p.median_seconds)}</b></td><td class="num">${dur(p.avg_seconds)}</td><td class="num">${nf(p.avg_scroll_pct)}%</td></tr>`).join('')}</tbody></table></div>`}
+            ${src('<code>v_page_time_30d</code> من أحداث page_leave (الوقت اللي الصفحة كانت ظاهرة فعلًا)')}</div>
+            <div class="card"><h3>الأجهزة والتطبيق</h3><p class="sub">عدد المدرسين حسب الجهاز (30 يوم)</p>${hbars(devs)}
+                <div style="margin-top:12px" class="pill">📲 ${nf(h.installed)} مدرس بيفتح من التطبيق المثبّت${total30 ? ` (${Math.round((h.installed / total30) * 100)}% من النشطين)` : ''}</div>
+                ${src('حقل device في <code>app_events</code> + session_start (standalone)')}</div>
+        </div>
+        <div class="card" style="margin-top:14px"><h3>أكتر الأزرار اتضغطت (30 يوم)</h3><p class="sub">الأزرار اللي محدش بيضغطها غالبًا محدش شايفها أو محتاجها</p>
+            ${hbars(clicks.map((c) => ({ n: `${esc(pageName(c.page))} · <code style="direction:ltr">${esc(c.target)}</code>`, v: Number(c.clicks) || 0, extra: `· ${nf(c.teachers)} مدرس` })))}
+            ${src('<code>v_clicks_30d</code>: أي زرار ليه id أو data-track في البرنامج')}</div>`;
+}
+const dur = (s) => { s = Number(s); if (!isFinite(s)) return '—'; if (s < 60) return `${Math.round(s)} ث`; return `${Math.floor(s / 60)} د ${Math.round(s % 60)} ث`; };
+
+// ============================================================ مباشر
+function evRow(e, withWho = true) {
+    const bad = BAD_EVENTS.includes(e.event);
+    const pr = e.props || {};
+    const extra = [];
+    if (pr.target) extra.push(pr.target); if (pr.msg) extra.push(pr.msg); if (pr.endpoint) extra.push(pr.endpoint);
+    if (pr.ms) extra.push(`${(pr.ms / 1000).toFixed(1)} ث`); if (pr.minutes) extra.push(`${pr.minutes} د`);
+    if (pr.seconds != null && e.event === 'page_leave') extra.push(`${pr.seconds} ث`);
+    if (e.event === 'session_start' && pr.standalone) extra.push('من التطبيق');
+    return `<div class="ev ${bad ? 'bad' : ''}"><time>${esc(fmtTime(e.at))}</time><span class="ic">${evIcon(e.event)}</span>
+        <span class="what"><b>${esc(evName(e.event))}</b><small>${esc(pageName(e.page))}${extra.length ? ' · ' + esc(extra.join(' · ')) : ''}</small></span>
+        ${withWho ? `<span class="who">${e.teacher_id ? `<a href="#" data-t="${esc(e.teacher_id)}">${esc(e.teacher_name || 'مدرس')}</a>` : ''}</span>` : ''}</div>`;
+}
+async function loadLive() {
+    try {
+        const only = $('#live-only').value;
+        const d = await call('feed', only ? { only } : {});
+        state.feed = d.feed || [];
+        $('#live-updated').textContent = `اتحدّث ${fmtTime(new Date())}`;
+        $('#live-list').innerHTML = !state.feed.length ? '<div class="card empty">مفيش أحداث لسه. أول ما مدرس يفتح البرنامج هتظهر هنا.</div>'
+            : `<div class="feed">${state.feed.map((e) => evRow(e)).join('')}</div>${src('آخر 200 حدث من <code>app_events</code> (من غير خروج الصفحات)')}`;
+        $$('#live-list [data-t]').forEach((a) => a.addEventListener('click', async (ev) => {
+            ev.preventDefault();
+            if (!state.teachers) { try { state.teachers = (await call('teachers')).teachers || []; } catch (e) { return; } }
+            openTeacher(a.dataset.t);
+        }));
+    } catch (e) { if (e.message !== 'AUTH') $('#live-list').innerHTML = errBox(e.message); }
+}
+let liveTimer = null;
+function scheduleLive() {
+    clearInterval(liveTimer);
+    if ($('#live-auto').checked) liveTimer = setInterval(() => { if (current === 'live' && document.visibilityState === 'visible') loadLive(); }, (CFG.LIVE_REFRESH_SECONDS || 30) * 1000);
+}
+
+// ============================================================ الخريطة: البيانات ماشية منين وإزاي
+function renderFlow() {
+    const p = (state.overview && state.overview.pipeline) || {};
+    const k = (state.overview && state.overview.kpis) || {};
+    const node = (ic, t, d, live) => `<div class="node"><div class="t">${ic} ${t}</div><div class="d">${d}</div>${live ? `<div class="live">${live}</div>` : ''}</div>`;
+    const arr = '<div class="arrow">←</div>';
+    $('#p-flow').innerHTML = `
+        <div class="note">الصفحة دي بتشرح كل رقم في اللوحة جه منين. الأرقام الملوّنة تحت كل خطوة مباشرة من قاعدة البيانات.</div>
+        <div class="card"><h3>1) تتبع الاستخدام</h3><p class="sub">تلقائي بالكامل، من غير ما المدرس يعمل حاجة، ومن غير أي نص كتبه المدرس</p>
+        <div class="flow"><div class="flow-row">
+            ${node('👩‍🏫', 'المدرس بيستخدم البرنامج', 'يفتح صفحة، يضغط زرار، يسجّل حصة، يسأل المساعد…')}${arr}
+            ${node('📦', 'js/track.js', 'بيجمّع الأحداث على الموبايل ويبعتها كل 15 ثانية (ولو النت قاطع بتستنى)')}${arr}
+            ${node('⚙️', 'n8n: track-events', 'بيتأكد من هوية المدرس من Supabase وبيحفظ')}${arr}
+            ${node('🗄️', 'جدول <code>app_events</code>', 'سطر لكل حدث: المدرس، الحدث، الصفحة، أرقام صغيرة', `${nf(p.events_24h)} حدث آخر 24 ساعة · آخر واحد ${ago(p.last_event_at)}`)}
+        </div><div class="flow-row">
+            ${node('🧮', 'Views جاهزة', '<code>v_teacher_activity</code> · <code>v_churn_risk</code> · <code>v_frustration_7d</code> · <code>v_page_time_30d</code> · <code>v_clicks_30d</code> · <code>v_onboarding_funnel</code>', `${nf(k.at_risk)} مدرس محتاج متابعة`)}${arr}
+            ${node('🔐', 'n8n: owner-dashboard', 'بيتأكد إنك أدمن (جدول <code>app_admins</code>) وبينادي دالة <code>owner_api</code>')}${arr}
+            ${node('📊', 'اللوحة دي', 'GitHub Pages. مفيش بيانات محفوظة فيها، كل حاجة بتتجاب وقت ما تفتحيها')}
+        </div></div></div>
+
+        <div class="card" style="margin-top:14px"><h3>2) الاقتراحات</h3><p class="sub">من المدرس لحد ما يتبلّغ إن اقتراحه اتنفذ</p>
+        <div class="flow"><div class="flow-row">
+            ${node('💡', 'زرار "عندك اقتراح؟"', 'في القايمة الجانبية لكل الصفحات. المدرس يكتب ويختار يظهر اسمه ولا لأ')}${arr}
+            ${node('⚙️', 'n8n: submit-suggestion', 'بيحفظ الاقتراح ومعاه الصفحة اللي اتكتب منها')}${arr}
+            ${node('🗄️', 'جدول <code>feature_suggestions</code>', 'الحالة · الأصوات · ملاحظتك', `${nf(k.suggestions_new)} اقتراح جديد · آخر واحد ${ago(p.last_suggestion_at)}`)}${arr}
+            ${node('✅', 'تبويب الاقتراحات', 'تغيّري الحالة ← "اتعمل" ← زرار واتساب يبلّغ المدرس')}
+        </div></div></div>
+
+        <div class="card" style="margin-top:14px"><h3>3) البيانات الأساسية</h3><p class="sub">الأرقام اللي مش من التتبع: بتتقري مباشرة من جداول البرنامج</p>
+        <div class="flow"><div class="flow-row">
+            ${node('👥', '<code>profiles</code>', 'المدرسين، وتاريخ التسجيل، والموبايل', `${nf(k.teachers_total)} مدرس`)}
+            ${node('📚', '<code>lessons</code>', 'الحصص المتسجلة فعلًا (completed)', `${nf(k.lessons_7d)} حصة آخر 7 أيام`)}
+            ${node('🧑‍🎓', '<code>students</code> · <code>schedules</code>', 'طلاب ومواعيد كل مدرس (قمع البداية)')}
+            ${node('💳', '<code>subscriptions</code>', 'حالة الاشتراك')}
+        </div></div></div>
+
+        <div class="card" style="margin-top:14px"><h3>قاموس الأحداث</h3><p class="sub">اسم كل حدث في قاعدة البيانات ومعناه</p>
+            <div class="gloss">${Object.entries(EV).map(([kk, [ic, n]]) => `<div><code>${kk}</code><span>${ic} ${esc(n)}</span></div>`).join('')}</div></div>
+
+        <div class="card" style="margin-top:14px"><h3>"محتاج متابعة" معناها إيه؟</h3>
+            <p class="sub" style="margin:0">من <code>v_churn_risk</code>، بالترتيب:</p>
+            <ul style="margin:8px 0 0;padding-inline-start:20px;font-size:14px;line-height:1.9">
+                <li><b>ما فتحش البرنامج من ساعة التتبع</b>: مفيش ولا حدث للمدرس ده.</li>
+                <li><b>مختفي أكتر من أسبوعين / أسبوع</b>: آخر ظهور قديم.</li>
+                <li><b>بيقابل أخطاء/تعطيل كتير</b>: 5 إشارات إحباط أو أكتر في 7 أيام.</li>
+                <li><b>بيفتح ومابيسجلش حصص</b>: نشيط 3 أيام أو أكتر في الشهر ومفيش ولا حصة. غالبًا محتاج حد يشرحله.</li>
+            </ul></div>`;
+}
+
+// ============================================================ التحميل والتبويبات
+let current = 'overview';
+const loaded = {};
+async function ensure(section) {
+    const map = { overview: 'overview', teachers: 'teachers', suggestions: 'suggestions', problems: 'health', usage: 'health', flow: 'overview' };
+    const key = map[section];
+    if (!key) return;
+    if (!state[key]) {
+        const d = await call(key);
+        state[key] = key === 'teachers' ? (d.teachers || []) : key === 'suggestions' ? (d.suggestions || []) : d;
+    }
+    if (section === 'usage' && !state.overview) state.overview = await call('overview');
+}
+async function switchTab(name) {
+    current = name;
+    $$('#tabs button').forEach((b) => b.classList.toggle('active', b.dataset.tab === name));
+    $$('.panel').forEach((p) => p.classList.toggle('active', p.id === `p-${name}`));
+    try { history.replaceState(null, '', `#${name}`); } catch (e) { /* تجاهل */ }
+    if (name === 'live') { loadLive(); return; }
+    try {
+        await ensure(name);
+        ({ overview: renderOverview, teachers: renderTeachers, suggestions: renderSuggestions, problems: renderProblems, usage: renderUsage, flow: renderFlow })[name]();
+    } catch (e) {
+        if (e.message === 'AUTH') return;
+        const target = name === 'teachers' ? '#t-list' : name === 'suggestions' ? '#s-list' : `#p-${name}`;
+        $(target).innerHTML = errBox(e.message);
+    }
+}
+async function refreshAll() {
+    state.overview = state.teachers = state.suggestions = state.health = null;
+    const btn = $('#btn-refresh'); btn.disabled = true;
+    try {
+        state.overview = await call('overview');
+        updateHealthPill();
+        await switchTab(current);
+    } catch (e) { if (e.message !== 'AUTH') toast(e.message); }
+    finally { btn.disabled = false; }
+}
+
+// ============================================================ الدخول والخروج
+function showLogin(msg) {
+    $('#view-app').hidden = true; $('#view-login').hidden = false;
+    const err = $('#l-err'); err.hidden = !msg; err.textContent = msg || '';
+}
+async function showApp(session) {
+    $('#view-login').hidden = true; $('#view-app').hidden = false;
+    $('#who').textContent = session.user.email || '';
+    try {
+        state.overview = await call('overview');
+        updateHealthPill();
+        const hash = (location.hash || '').slice(1);
+        await switchTab(['overview', 'teachers', 'suggestions', 'problems', 'usage', 'live', 'flow'].includes(hash) ? hash : 'overview');
+    } catch (e) {
+        if (e.message !== 'AUTH') $('#p-overview').innerHTML = errBox(e.message);
+    }
+}
+$('#login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = $('#l-btn'); btn.disabled = true; btn.textContent = 'جاري الدخول…';
+    $('#l-err').hidden = true;
+    const email = $('#l-email').value.trim().toLowerCase();
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: $('#l-pass').value });
+    btn.disabled = false; btn.textContent = 'دخول';
+    if (error) { showLogin(/fetch|network/i.test(error.message) ? 'مفيش اتصال. اتأكدي من النت.' : 'الإيميل أو كلمة المرور غلط.'); return; }
+    showApp(data.session);
+});
+$('#btn-logout').addEventListener('click', async () => { await sb.auth.signOut(); location.hash = ''; showLogin(); });
+$('#btn-refresh').addEventListener('click', refreshAll);
+$('#btn-app').href = CFG.APP_URL || '#';
+$('#range').addEventListener('change', (e) => { state.days = Number(e.target.value) || 30; refreshAll(); });
+$$('#tabs button').forEach((b) => b.addEventListener('click', () => switchTab(b.dataset.tab)));
+$('#live-only').innerHTML = '<option value="">كل الأحداث</option>' + Object.entries(EV).map(([k, [ic, n]]) => `<option value="${k}">${ic} ${n}</option>`).join('');
+$('#live-only').addEventListener('change', loadLive);
+$('#live-auto').addEventListener('change', scheduleLive);
+scheduleLive();
+// تحديث خفيف كل 5 دقايق للأرقام العامة لو اللوحة مفتوحة
+setInterval(async () => {
+    if (document.visibilityState !== 'visible' || $('#view-app').hidden) return;
+    try { state.overview = await call('overview'); updateHealthPill(); if (current === 'overview') renderOverview(); } catch (e) { /* تجاهل */ }
+}, 5 * 60 * 1000);
+
+sb.auth.getSession().then(({ data }) => { if (data && data.session) showApp(data.session); else showLogin(); });
+})();
+</script>
+</body>
+</html>
