@@ -1,0 +1,195 @@
+{
+ "name": "owner-billing",
+ "nodes": [
+  {
+   "parameters": {
+    "httpMethod": "POST",
+    "path": "owner-billing",
+    "responseMode": "responseNode",
+    "options": {}
+   },
+   "id": "5d1c57ae-9e75-45f3-a1e2-a5cf311a406f",
+   "name": "Webhook",
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 1,
+   "position": [
+    -880,
+    160
+   ],
+   "webhookId": "95c20d52-e9b9-4cbe-8bf8-1d87fd3bfec7"
+  },
+  {
+   "parameters": {
+    "jsCode": "// التحقق من هوية المدرس عن طريق Supabase (والنتيجة بتتحفظ 5 دقايق عشان السرعة)\nconst SUPABASE_URL = 'https://qdpnupgqvjxlrmwwgmij.supabase.co';\nconst SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkcG51cGdxdmp4bHJtd3dnbWlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk5NjczMjUsImV4cCI6MjA4NTU0MzMyNX0.gaWPEgrhIQJzZLVoo7x1hnS-63ZJPZN96Xb3WpqApik';\nconst req = $input.first().json;\nconst headers = req.headers || {};\nconst token = String(headers.authorization || headers.Authorization || '').replace(/^Bearer\\s+/i, '').trim();\nif (!token || token.split('.').length < 3) return [{ json: { ok: false, code: 'UNAUTHORIZED' } }];\nconst cache = $getWorkflowStaticData('global');\ncache.__auth = cache.__auth || {};\nconst key = token.slice(-32);\nlet uid = cache.__auth[key] && cache.__auth[key].until > Date.now() ? cache.__auth[key].uid : null;\nif (!uid) {\n  let user = null;\n  try {\n    user = await this.helpers.httpRequest({ method: 'GET', url: SUPABASE_URL + '/auth/v1/user', headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + token }, json: true, timeout: 8000 });\n  } catch (e) { return [{ json: { ok: false, code: 'UNAUTHORIZED' } }]; }\n  if (!user || !user.id) return [{ json: { ok: false, code: 'UNAUTHORIZED' } }];\n  uid = user.id;\n  const keys = Object.keys(cache.__auth);\n  if (keys.length > 500) keys.slice(0, 250).forEach((k) => delete cache.__auth[k]);\n  cache.__auth[key] = { uid, until: Date.now() + 5 * 60 * 1000 };\n}\nconst body = req.body || {};\n// طلبات الاشتراكات من لوحة المتابعة\nconst ALLOWED = ['billing_overview', 'billing_teachers', 'billing_payments', 'billing_activate', 'billing_adjust', 'billing_undo'];\nconst section = ALLOWED.includes(body.section) ? body.section : 'billing_overview';\nconst UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;\nconst DATE_RE = /^\\d{4}-\\d{2}-\\d{2}$/;\nconst str = (v, n) => String(v == null ? '' : v).slice(0, n);\nconst q = { section };\nif (UUID_RE.test(str(body.teacher_id, 40))) q.teacher_id = str(body.teacher_id, 40);\nif (UUID_RE.test(str(body.id, 40))) q.id = str(body.id, 40);\nif (['starter', 'pro'].includes(body.plan)) q.plan = body.plan;\nif (['monthly', 'semiannual', 'annual', 'custom'].includes(body.period)) q.period = body.period;\nif (['payment', 'gift'].includes(body.kind)) q.kind = body.kind;\nif (['change_plan', 'set_end', 'stop', 'trial_until'].includes(body.action)) q.action = body.action;\nif (body.months !== undefined && body.months !== '') q.months = String(Math.max(0, Math.min(36, parseInt(body.months, 10) || 0)));\nif (body.extra_days !== undefined && body.extra_days !== '') q.extra_days = String(Math.max(0, Math.min(365, parseInt(body.extra_days, 10) || 0)));\nif (body.amount !== undefined && body.amount !== '') { const a = Number(String(body.amount).replace(/[٠-٩]/g, (c) => c.charCodeAt(0) - 1632).replace(/[^\\d.]/g, '')); if (isFinite(a)) q.amount = String(a); }\nfor (const k of ['starts_at', 'paid_at', 'date']) if (DATE_RE.test(str(body[k], 10))) q[k] = str(body[k], 10);\nif (body.method) q.method = str(body.method, 40);\nif (body.note) q.note = str(body.note, 500);\nif (body.reason) q.reason = str(body.reason, 300);\nconst needTeacher = ['billing_activate', 'billing_adjust'].includes(section);\nif ((needTeacher && !q.teacher_id) || (section === 'billing_undo' && !q.id)) return [{ json: { ok: false, code: 'INVALID' } }];\nreturn [{ json: { ok: true, teacherId: uid, reqJson: JSON.stringify(q) } }];"
+   },
+   "id": "6c3918f2-063c-4c6e-8d4e-ba298d2a311d",
+   "name": "Verify User",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    -656,
+    160
+   ]
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "boolean": [
+      {
+       "value1": "={{ $json.ok }}",
+       "value2": true
+      }
+     ]
+    }
+   },
+   "id": "84192fb1-2f5c-467d-821b-01737d200670",
+   "name": "Authorized?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 1,
+   "position": [
+    -448,
+    160
+   ]
+  },
+  {
+   "parameters": {
+    "operation": "executeQuery",
+    "query": "-- الاشتراكات والمدفوعات (DB_billing.sql)\nSELECT teachers_manager.owner_billing_api($1::uuid, $2::jsonb) AS r;",
+    "options": {
+     "queryReplacement": "={{ [$json.teacherId, $json.reqJson] }}"
+    }
+   },
+   "id": "180ea7b7-28e7-45c5-a4af-f9da8c48fd2c",
+   "name": "Owner API",
+   "type": "n8n-nodes-base.postgres",
+   "typeVersion": 2.4,
+   "position": [
+    -224,
+    64
+   ],
+   "credentials": {
+    "postgres": {
+     "id": "bxJVKX8A8LBKYb6c",
+     "name": "Postgres account"
+    }
+   },
+   "onError": "continueErrorOutput"
+  },
+  {
+   "parameters": {
+    "respondWith": "json",
+    "responseBody": "={{ JSON.stringify($json.r && $json.r.error ? { success: false, error: { code: $json.r.error, message: $json.r.error === 'FORBIDDEN' ? 'اللوحة دي لصاحبة البرنامج بس.' : ($json.r.message || 'طلب غير معروف') } } : { success: true, data: $json.r }) }}",
+    "options": {
+     "responseCode": "={{ $json.r && $json.r.error === 'FORBIDDEN' ? 403 : 200 }}"
+    }
+   },
+   "id": "0c5e01c3-c77b-4596-8b48-6e5085a32995",
+   "name": "Respond",
+   "type": "n8n-nodes-base.respondToWebhook",
+   "typeVersion": 1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "respondWith": "json",
+    "responseBody": "={{ JSON.stringify({ success: false, error: { code: 'DB_ERROR', message: 'حصلت مشكلة في قاعدة البيانات. اتأكدي إن DB_billing.sql اتشغّل.' } }) }}",
+    "options": {}
+   },
+   "id": "5b119576-805c-4c8c-ae80-d4290f9b023b",
+   "name": "DB Error Response",
+   "type": "n8n-nodes-base.respondToWebhook",
+   "typeVersion": 1,
+   "position": [
+    0,
+    160
+   ]
+  },
+  {
+   "parameters": {
+    "respondWith": "json",
+    "responseBody": "={{ JSON.stringify({ success: false, error: { code: $json.code || 'UNAUTHORIZED', message: $json.code === 'INVALID' ? 'طلب ناقص' : 'انتهت الجلسة. ادخلي تاني.' } }) }}",
+    "options": {
+     "responseCode": "={{ $json.code === 'UNAUTHORIZED' ? 401 : 400 }}"
+    }
+   },
+   "id": "9c262717-9117-4e0a-95b5-98e4f4064c20",
+   "name": "Rejected Response",
+   "type": "n8n-nodes-base.respondToWebhook",
+   "typeVersion": 1,
+   "position": [
+    -224,
+    304
+   ]
+  }
+ ],
+ "connections": {
+  "Webhook": {
+   "main": [
+    [
+     {
+      "node": "Verify User",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Verify User": {
+   "main": [
+    [
+     {
+      "node": "Authorized?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Authorized?": {
+   "main": [
+    [
+     {
+      "node": "Owner API",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Rejected Response",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Owner API": {
+   "main": [
+    [
+     {
+      "node": "Respond",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "DB Error Response",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "active": false,
+ "settings": {
+  "executionOrder": "v1",
+  "callerPolicy": "workflowsFromSameOwner"
+ },
+ "pinData": {},
+ "tags": []
+}

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-NXC2WZMT');</script>
+    <!-- End Google Tag Manager -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>الاشتراك - Teachers Manager</title>
+    <link rel="stylesheet" href="css/style.css?v=30">
+    <!-- PWA: أيقونات التطبيق والبيانات الوصفية اللازمة للتثبيت على الشاشة الرئيسية والدومين -->
+    <link rel="icon" type="image/x-icon" href="assets/icons/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16.png">
+    <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4B3A5A">
+    <style>
+        body { margin: 0; }
+        .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 2rem; margin-top: 2rem; max-width: 640px; margin-inline: auto; }
+        .pricing-card { background: var(--card-bg); border: 2px solid var(--border); border-radius: 12px; padding: 2rem; text-align: center; transition: 0.3s; }
+        .pricing-card:hover { box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1); transform: translateY(-4px); }
+        .pricing-card.active { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(75, 58, 90, 0.1); }
+        .pricing-card h3 { color: var(--primary); margin-top: 0; }
+        .price { font-size: 2.5rem; font-weight: bold; color: var(--primary); margin: 1rem 0; }
+        .price small { font-size: 1rem; font-weight: 600; color: var(--text-secondary); }
+        .price-period { color: #716A74; font-size: 0.9rem; }
+        .features-list { text-align: right; margin: 2rem 0; }
+        .features-list li { list-style: none; padding: 0.5rem 0; color: #716A74; }
+        .features-list li:before { content: "✓"; color: var(--success-text); font-weight: bold; margin-inline-end: 0.5rem; }
+        .btn { width: 100%; padding: 0.75rem; margin-top: 1.5rem; }
+        .whatsapp-btn { background: var(--whatsapp); display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; text-decoration: none; color: #fff; font-weight: 700; box-sizing: border-box; }
+        .whatsapp-btn:hover { background: var(--whatsapp-hover); }
+        .status-banner { background: #E8F5E9; color: var(--success-text); padding: 1rem; border-radius: 8px; margin-bottom: 2rem; text-align: center; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-weight: 600; }
+        .subscribe-note { text-align: center; color: var(--text-secondary); font-size: 0.8rem; margin-top: 0.75rem; }
+        .early-card { max-width: 640px; margin: 0 auto 1rem; background: rgba(197,154,74,0.12); border: 1px solid rgba(197,154,74,0.4); border-radius: 12px; padding: 1rem 1.2rem; display: flex; flex-direction: column; gap: 0.35rem; }
+        .early-card span { color: var(--text-secondary); font-size: 0.92rem; line-height: 1.7; }
+        .plan-badge { display: inline-block; background: var(--primary); color: #fff; font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 999px; margin-bottom: 0.5rem; }
+        @media (max-width: 480px) {
+            .pricing-grid { grid-template-columns: 1fr; }
+            .pricing-card { padding: 1.5rem; }
+        }
+    </style>
+    <link rel="stylesheet" href="css/v29.css?v=30">
+</head>
+<body>
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NXC2WZMT"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <div class="app-shell">
+    <div id="sidebar-root"></div>
+    <main class="main-content">
+    <div id="top-header-root"></div>
+    <div class="page-body">
+    <div class="container" style="max-width: 1100px; margin: 0; padding: 0;">
+        <h1 class="page-title-dup" style="color: var(--primary); text-align: center;">اشتراكك في Teachers Manager</h1>
+        <p style="text-align: center; color: #716A74; margin-bottom: 1.5rem;" id="free-lead">البرنامج مجاني بالكامل لكل المدرسين لحد 31 ديسمبر 2026</p>
+
+        <div class="status-banner" id="status-banner" style="display: none;"></div>
+
+        <div class="early-card" id="early-card">
+            <strong>🎁 عرض المسجّلين بدري</strong>
+            <span>لو سجّلت قبل نهاية الفترة المجانية واستخدمت البرنامج، هتاخد الباقة الاحترافية بسعر البداية (99 جنيه) طول سنة 2027.</span>
+        </div>
+
+        <h2 style="color: var(--primary); text-align: center; font-size: 1.2rem; margin: 2rem 0 1rem;" id="plans-title">الباقات بعد الفترة المجانية</h2>
+        <div class="pricing-grid" id="plans-grid"></div>
+
+        <div style="background: var(--card-bg); padding: 2rem; border-radius: 12px; margin-top: 3rem; border: 1px solid var(--border); max-width: 640px; margin-inline: auto;">
+            <h2 style="color: var(--primary); text-align: center;">الأسئلة الشائعة</h2>
+            <div style="max-width: 600px; margin: 0 auto;">
+                <div style="margin-bottom: 1.5rem;">
+                    <h4 style="color: var(--primary);">هل البرنامج مجاني فعلًا دلوقتي؟</h4>
+                    <p style="color: #716A74;" id="faq-free">أيوه، كل المزايا مفتوحة مجانًا لحد 31 ديسمبر 2026، من غير ما تدخل أي بيانات دفع.</p>
+                </div>
+                <div style="margin-bottom: 1.5rem;">
+                    <h4 style="color: var(--primary);">إيه الفرق بين الباقتين؟</h4>
+                    <p style="color: #716A74;">باقة البداية مناسبة لو عندك لحد 10 طلاب. الاحترافية طلابها بلا حد، والمساعد الذكي فيها بحد يومي أكبر.</p>
+                </div>
+                <div style="margin-bottom: 1.5rem;">
+                    <h4 style="color: var(--primary);">إزاي أشترك؟</h4>
+                    <p style="color: #716A74;">اضغط على زرار الباقة اللي تناسبك، وهيتفتح واتساب برسالة جاهزة. تقدر تدفع بإنستاباي أو فودافون كاش، وحسابك بيتفعّل على طول.</p>
+                </div>
+                <div>
+                    <h4 style="color: var(--primary);">لو مااشتركتش بعد الفترة المجانية، بياناتي هتروح؟</h4>
+                    <p style="color: #716A74;">لا. كل طلابك وحصصك بتفضل محفوظة، وتقدر تشوفها. بس تسجيل حصص جديدة بيحتاج اشتراك.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+    </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+    <script type="module" src="js/config.js?v=30"></script>
+    <script type="module">
+        import { Auth } from './js/auth.js?v=30';
+        import { renderSidebar, renderTopHeader, computeSubscriptionState, daysLabel, getSubscriptionCached, trialEndLabel } from './js/sidebar.js?v=30';
+        import { icon } from './js/icons.js?v=30';
+        import { CONFIG } from './js/config.js?v=30';
+
+        renderSidebar('settings');
+        renderTopHeader({ title: 'الاشتراك', subtitle: 'باقات تطبيق Teachers Manager', showSearch: false });
+
+        const FREE_LABEL = CONFIG.PRICING.FREE_UNTIL_LABEL;
+        document.getElementById('free-lead').textContent = `البرنامج مجاني بالكامل لكل المدرسين لحد ${FREE_LABEL}`;
+        document.getElementById('faq-free').textContent = `أيوه، كل المزايا مفتوحة مجانًا لحد ${FREE_LABEL}، من غير ما تدخل أي بيانات دفع.`;
+        const freeOver = Date.now() > new Date(CONFIG.PRICING.FREE_UNTIL + 'T23:59:59').getTime();
+        if (freeOver) {
+            document.getElementById('plans-title').textContent = 'اختار باقتك';
+            document.getElementById('early-card').hidden = true;
+        }
+
+        const FEATURES = {
+            starter: ['لحد 10 طلاب', 'تسجيل الحصص والحضور والغياب', 'متابعة الدفع ورسائل التذكير', 'تقرير الشهر لولي الأمر', 'المساعد الذكي (حد يومي أقل)'],
+            pro: ['طلاب بلا حد', 'كل مزايا البداية', 'المساعد الذكي و"حضّرلي الحصة"', 'مكتبتي (كتبك ومذكراتك)', 'ملخص فلوس الشهر', 'دعم أولوي على واتساب']
+        };
+        document.getElementById('plans-grid').innerHTML = CONFIG.PRICING.PLANS.map((p) => `
+            <div class="pricing-card ${p.id === 'pro' ? 'active' : ''}">
+                ${p.id === 'pro' ? '<span class="plan-badge">الأكثر اختيارًا</span>' : ''}
+                <h3>${p.name}</h3>
+                <div class="price">${p.price} <small>جنيه / شهريًا</small></div>
+                <p class="price-period">${p.desc}</p>
+                <ul class="features-list">${(FEATURES[p.id] || []).map((f) => `<li>${f}</li>`).join('')}</ul>
+                <a class="btn whatsapp-btn" data-plan="${p.id}" href="#" target="_blank" rel="noopener">
+                    <span class="wa-ic"></span> ${freeOver ? 'اشترك عبر واتساب' : 'احجز الباقة دي عبر واتساب'}
+                </a>
+            </div>`).join('');
+        document.querySelectorAll('[data-plan]').forEach((a) => {
+            const plan = CONFIG.PRICING.PLANS.find((p) => p.id === a.dataset.plan);
+            const msg = `مرحباً، أرغب في الاشتراك في باقة "${plan.name}" (${plan.price} جنيه شهريًا) في تطبيق Teachers Manager.`;
+            a.href = `https://wa.me/${CONFIG.SUPPORT_WHATSAPP}?text=${encodeURIComponent(msg)}`;
+            a.querySelector('.wa-ic').innerHTML = icon('messageCircle', { size: 18 });
+            a.addEventListener('click', () => {
+                try { (window.dataLayer = window.dataLayer || []).push({ event: 'plan_click', plan: plan.id }); } catch (e) { /* تجاهل */ }
+            });
+        });
+
+        // Check auth
+        window.addEventListener('load', async () => {
+            const authInfo = await Auth.requireAuth();
+            if (!authInfo) return;
+
+            // Check subscription status — نعرض دائمًا كام يوم متبقٍ (سواء تجريبي أو مدفوع) حتى يفهم المستخدم موقفه بوضوح
+            try {
+                const sub = await getSubscriptionCached();
+                const state = computeSubscriptionState(sub);
+                const statusBanner = document.getElementById('status-banner');
+
+                if (state.kind === 'active' && !state.locked) {
+                    // v29.2: اسم الباقة اللي المدرس مشترك فيها (البداية / الاحترافية)
+                    const myPlan = CONFIG.PRICING.PLANS.find((p) => p.id === (sub && sub.plan));
+                    const planLabel = myPlan ? `باقة "${myPlan.name}"` : 'الباقة';
+                    const endLabel = sub && sub.paid_until ? new Date(sub.paid_until).toLocaleDateString('ar-EG-u-nu-latn', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+                    statusBanner.innerHTML = state.daysLeft !== null
+                        ? icon('checkCircle', { size: 16 }) + ` أنت مشترك في ${planLabel} لحد ${endLabel} (متبقٍ ${daysLabel(state.daysLeft)})`
+                        : icon('checkCircle', { size: 16 }) + ` أنت مشترك في ${planLabel}`;
+                    document.querySelectorAll('.pricing-card').forEach((c, i) => c.classList.toggle('active', !!myPlan && CONFIG.PRICING.PLANS[i] && CONFIG.PRICING.PLANS[i].id === myPlan.id));
+                } else if (state.kind === 'trial' && !state.locked) {
+                    // من غير تاريخ نهاية: كانت بتكتب "فاضل 0 يوم" لمدرس حسابه شغال عادي
+                    statusBanner.innerHTML = icon('clock', { size: 16 }) + (state.daysLeft == null
+                        ? ` حسابك في الفترة المجانية لحد ${FREE_LABEL}`
+                        : state.daysLeft > 14
+                            ? ` حسابك مجاني لحد ${trialEndLabel(sub)}`
+                            : ` فاضل ${daysLabel(state.daysLeft)} على نهاية الفترة المجانية`);
+                } else if (state.locked) {
+                    statusBanner.style.background = '#FFEBEE';
+                    statusBanner.style.color = '#B85C5C';
+                    statusBanner.innerHTML = icon('warning', { size: 16 }) +
+                        (state.reason === 'trial_expired' ? ' انتهت الفترة المجانية — بياناتك محفوظة، اشترك عشان تكمّل تسجيل الحصص' : ' انتهت صلاحية اشتراكك — جدد الآن للمتابعة');
+                } else {
+                    statusBanner.style.display = 'none';
+                    return;
+                }
+                statusBanner.style.display = 'flex';
+            } catch (error) {
+                console.error('Error checking subscription:', error);
+            }
+        });
+    </script>
+    <script src="js/pwa-install.js?v=30" defer></script>
+</body>
+</html>
