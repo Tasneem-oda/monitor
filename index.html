@@ -76,8 +76,8 @@ a { color: var(--primary); }
 .kpi.alert { border-color: #EBC3C3; background: linear-gradient(0deg, var(--bad-soft), var(--card) 70%); }
 .kpi.alert .num { color: var(--bad); }
 .kpi.attn { border-color: #EBD5A6; background: linear-gradient(0deg, var(--gold-soft), var(--card) 70%); }
-.kpi[data-goto] { cursor: pointer; }
-.kpi[data-goto]:hover { border-color: var(--primary-2); }
+.kpi[data-goto], .kpi[data-bgo], .kpi[data-ov-bill] { cursor: pointer; }
+.kpi[data-goto]:hover, .kpi[data-bgo]:hover, .kpi[data-ov-bill]:hover { border-color: var(--primary-2); }
 
 /* خط البيانات */
 .pipe { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
@@ -246,6 +246,7 @@ select.inp, input.inp, textarea.inp { border: 1px solid var(--line); border-radi
     <main class="wrap">
         <nav class="tabs" id="tabs" role="tablist">
             <button data-tab="overview" class="active">📈 نظرة عامة</button>
+            <button data-tab="billing">💳 الاشتراكات <span class="cnt" id="cnt-bill" hidden></span></button>
             <button data-tab="teachers">👩‍🏫 المدرسين <span class="cnt" id="cnt-risk" hidden></span></button>
             <button data-tab="suggestions">💡 الاقتراحات <span class="cnt neutral" id="cnt-sug" hidden></span></button>
             <button data-tab="problems">⚠️ المشاكل <span class="cnt" id="cnt-prob" hidden></span></button>
@@ -256,6 +257,8 @@ select.inp, input.inp, textarea.inp { border: 1px solid var(--line); border-radi
 
         <!-- نظرة عامة -->
         <section class="panel active" id="p-overview"><div class="loading">جاري التحميل…</div></section>
+        <!-- الاشتراكات (billing.js) -->
+        <section class="panel" id="p-billing"><div class="loading">جاري التحميل…</div></section>
         <!-- المدرسين -->
         <section class="panel" id="p-teachers">
             <div class="filters" id="t-filters"></div>
@@ -347,7 +350,7 @@ const fmtTime = (t) => t ? new Date(t).toLocaleTimeString('ar-EG', { hour: 'nume
 // ============================================================ الاتصال
 let state = { days: 30, overview: null, teachers: null, suggestions: null, health: null, feed: null, tFilter: 'risk', tSearch: '', sFilter: 'open' };
 
-async function call(section, extra = {}) {
+async function call(section, extra = {}, endpoint = CFG.ENDPOINT) {
     const { data } = await sb.auth.getSession();
     const token = data && data.session ? data.session.access_token : null;
     if (!token) { showLogin(); throw new Error('AUTH'); }
@@ -355,15 +358,15 @@ async function call(section, extra = {}) {
     const timer = setTimeout(() => ctl.abort(), 30000);
     let res;
     try {
-        res = await fetch(CFG.ENDPOINT, {
+        res = await fetch(endpoint, {
             method: 'POST', signal: ctl.signal,
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
             body: JSON.stringify({ section, days: state.days, ...extra })
         });
     } catch (e) {
-        throw new Error(e.name === 'AbortError' ? 'الخادم اتأخر في الرد. جرّبي تاني.' : 'مقدرناش نوصل لـ n8n. اتأكدي من النت ومن رابط ENDPOINT في config.js.');
+        throw new Error(e.name === 'AbortError' ? 'الخادم اتأخر في الرد. جرّبي تاني.' : 'مقدرناش نوصل لـ n8n. اتأكدي من النت ومن الروابط في config.js.');
     } finally { clearTimeout(timer); }
-    if (res.status === 404) throw new Error('workflow "owner-dashboard" مش متفعّل في n8n (404).');
+    if (res.status === 404) throw new Error(endpoint === CFG.ENDPOINT ? 'workflow "owner-dashboard" مش متفعّل في n8n (404).' : 'workflow "owner-billing" مش متفعّل في n8n (404).');
     let body = null;
     try { body = await res.json(); } catch (e) { /* تجاهل */ }
     if (res.status === 401) { await sb.auth.signOut(); showLogin('انتهت الجلسة، ادخلي تاني.'); throw new Error('AUTH'); }
@@ -472,6 +475,7 @@ function renderOverview() {
     $('#p-overview').innerHTML = `
         <div class="grid g-kpi">${tiles.map((t) => `<div class="card kpi ${t.cls || ''}" ${t.go ? `data-goto="${t.go}"` : ''}>
             <div class="lbl">${t.l}</div><div class="num">${nf(t.v)}</div><div class="hint">${t.h}</div>${src(t.s)}</div>`).join('')}</div>
+        <div id="bill-ov"></div>
 
         <div class="section-title"><h2>خط البيانات</h2><p>بيوريكي إن التتبع شغال والبيانات بتوصل</p></div>
         <div class="card"><div class="pipe">
@@ -499,6 +503,7 @@ function renderOverview() {
             <div class="card"><h3>الاشتراكات</h3><p class="sub">حالة كل المدرسين دلوقتي</p>${hbars(subs)}${src('<code>subscriptions.status</code>')}</div>
         </div>`;
     $$('#p-overview [data-goto]').forEach((el) => el.addEventListener('click', () => switchTab(el.dataset.goto)));
+    if (window.TMBilling) window.TMBilling.mountOverview($('#bill-ov'));
     updateHealthPill();
 }
 function pipeItem(t, title, sub, hint) {
@@ -768,7 +773,15 @@ function renderFlow() {
             ${node('✅', 'تبويب الاقتراحات', 'تغيّري الحالة ← "اتعمل" ← زرار واتساب يبلّغ المدرس')}
         </div></div></div>
 
-        <div class="card" style="margin-top:14px"><h3>3) البيانات الأساسية</h3><p class="sub">الأرقام اللي مش من التتبع: بتتقري مباشرة من جداول البرنامج</p>
+        <div class="card" style="margin-top:14px"><h3>3) الاشتراكات والفلوس</h3><p class="sub">من تبويب الاشتراكات لحد ما البرنامج يتفتح للمدرس</p>
+        <div class="flow"><div class="flow-row">
+            ${node('💳', 'تبويب الاشتراكات', 'تختاري المدرس والخطة والمدة والمبلغ وتضغطي "فعّلي"')}${arr}
+            ${node('🔐', 'n8n: owner-billing', 'بيتأكد إنك أدمن وبينادي دالة <code>owner_billing_api</code>')}${arr}
+            ${node('🗄️', '<code>subscription_payments</code>', 'سطر لكل دفعة أو هدية أو تعديل، ومعاه حالة الاشتراك قبلها عشان "تراجع"')}${arr}
+            ${node('✅', '<code>subscriptions</code>', 'status = active · plan · paid_until. البرنامج بيقرا ده وبيتفتح للمدرس على طول')}
+        </div></div></div>
+
+        <div class="card" style="margin-top:14px"><h3>4) البيانات الأساسية</h3><p class="sub">الأرقام اللي مش من التتبع: بتتقري مباشرة من جداول البرنامج</p>
         <div class="flow"><div class="flow-row">
             ${node('👥', '<code>profiles</code>', 'المدرسين، وتاريخ التسجيل، والموبايل', `${nf(k.teachers_total)} مدرس`)}
             ${node('📚', '<code>lessons</code>', 'الحصص المتسجلة فعلًا (completed)', `${nf(k.lessons_7d)} حصة آخر 7 أيام`)}
@@ -808,6 +821,11 @@ async function switchTab(name) {
     $$('.panel').forEach((p) => p.classList.toggle('active', p.id === `p-${name}`));
     try { history.replaceState(null, '', `#${name}`); } catch (e) { /* تجاهل */ }
     if (name === 'live') { loadLive(); return; }
+    if (name === 'billing') {
+        if (window.TMBilling) window.TMBilling.show();
+        else $('#p-billing').innerHTML = errBox('ملف billing.js مش موجود جنب index.html.');
+        return;
+    }
     try {
         await ensure(name);
         ({ overview: renderOverview, teachers: renderTeachers, suggestions: renderSuggestions, problems: renderProblems, usage: renderUsage, flow: renderFlow })[name]();
@@ -819,10 +837,10 @@ async function switchTab(name) {
 }
 async function refreshAll() {
     state.overview = state.teachers = state.suggestions = state.health = null;
+    if (window.TMBilling) window.TMBilling.reset();
     const btn = $('#btn-refresh'); btn.disabled = true;
     try {
-        state.overview = await call('overview');
-        updateHealthPill();
+        if (current !== 'billing') { state.overview = await call('overview'); updateHealthPill(); }
         await switchTab(current);
     } catch (e) { if (e.message !== 'AUTH') toast(e.message); }
     finally { btn.disabled = false; }
@@ -836,11 +854,17 @@ function showLogin(msg) {
 async function showApp(session) {
     $('#view-login').hidden = true; $('#view-app').hidden = false;
     $('#who').textContent = session.user.email || '';
+    const hash = (location.hash || '').slice(1);
+    const first = ['overview', 'billing', 'teachers', 'suggestions', 'problems', 'usage', 'live', 'flow'].includes(hash) ? hash : 'overview';
+    if (first === 'billing') {   // الاشتراكات مش محتاجة بيانات التتبع: تفتح على طول
+        switchTab('billing');
+        call('overview').then((o) => { state.overview = o; updateHealthPill(); }).catch(() => { /* تجاهل */ });
+        return;
+    }
     try {
         state.overview = await call('overview');
         updateHealthPill();
-        const hash = (location.hash || '').slice(1);
-        await switchTab(['overview', 'teachers', 'suggestions', 'problems', 'usage', 'live', 'flow'].includes(hash) ? hash : 'overview');
+        await switchTab(first);
     } catch (e) {
         if (e.message !== 'AUTH') $('#p-overview').innerHTML = errBox(e.message);
     }
@@ -870,8 +894,14 @@ setInterval(async () => {
     try { state.overview = await call('overview'); updateHealthPill(); if (current === 'overview') renderOverview(); } catch (e) { /* تجاهل */ }
 }, 5 * 60 * 1000);
 
-sb.auth.getSession().then(({ data }) => { if (data && data.session) showApp(data.session); else showLogin(); });
+// أدوات مشتركة لتبويب الاشتراكات (billing.js)
+window.TMD = { $, $$, esc, nf, ago, fmtDate, call, toast, errBox, lineChart, hbars, src, waLink, switchTab: (n) => switchTab(n) };
+
+// نبدأ بعد ما billing.js يتحمّل
+const start = () => sb.auth.getSession().then(({ data }) => { if (data && data.session) showApp(data.session); else showLogin(); });
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
 </script>
+<script src="billing.js"></script>
 </body>
 </html>

@@ -11,6 +11,19 @@ window.TM_DASH_CONFIG = {
     // n8n: الـ webhook بتاع workflow "owner-dashboard"
     ENDPOINT: 'https://vmi3639126.contaboserver.net/webhook/owner-dashboard',
 
+    // n8n: الـ webhook بتاع workflow "owner-billing" (تبويب الاشتراكات)
+    BILLING_ENDPOINT: 'https://vmi3639126.contaboserver.net/webhook/owner-billing',
+
+    // الأسعار اللي بتتكتب تلقائي في خانة المبلغ (تقدري تغيّري المبلغ وقت التفعيل لو فيه خصم)
+    // لو عملتي سعر مخفّض للـ 6 شهور أو السنة غيّريه هنا
+    PLANS: {
+        starter: { name: 'البداية', students: 10, monthly: 99, semiannual: 594, annual: 1188 },
+        pro: { name: 'الاحترافية', students: null, monthly: 150, semiannual: 900, annual: 1800 }
+    },
+
+    // طرق الدفع اللي بتظهر في القايمة
+    PAY_METHODS: ['فودافون كاش', 'إنستاباي', 'تحويل بنكي', 'كاش', 'أورانج كاش', 'اتصالات كاش', 'تاني'],
+
     // رابط البرنامج نفسه (للزرار "افتح البرنامج")
     APP_URL: 'https://teachers-manager.online',
 
