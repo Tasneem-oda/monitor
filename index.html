@@ -286,6 +286,7 @@ tr.cur td { background: var(--gold-soft); font-weight: 600; }
             <button data-tab="teachers">👩‍🏫 المدرسين <span class="cnt" id="cnt-risk" hidden></span></button>
             <button data-tab="notify">📣 الإشعارات</button>
             <button data-tab="books">📚 مراجعة الكتب <span class="cnt" id="cnt-books" hidden></span></button>
+            <button data-tab="games">🎮 مراجعة الألعاب <span class="cnt" id="cnt-games" hidden></span></button>
             <button data-tab="suggestions">💡 الاقتراحات <span class="cnt neutral" id="cnt-sug" hidden></span></button>
             <button data-tab="problems">⚠️ المشاكل <span class="cnt" id="cnt-prob" hidden></span></button>
             <button data-tab="usage">🧭 الاستخدام</button>
@@ -313,6 +314,8 @@ tr.cur td { background: var(--gold-soft); font-weight: 600; }
         <section class="panel" id="p-notify"><div class="loading">جاري التحميل…</div></section>
 
         <section class="panel" id="p-books"><div class="loading">جاري التحميل…</div></section>
+        <!-- v34: مراجعة ألعاب المدرسين (admin.js) -->
+        <section class="panel" id="p-games"><div class="loading">جاري التحميل…</div></section>
 
         <section class="panel" id="p-problems"><div class="loading">جاري التحميل…</div></section>
         <!-- الاستخدام -->
@@ -1185,8 +1188,8 @@ async function switchTab(name) {
         try { await refreshGoal(); } catch (e) { if (e.message !== 'AUTH') $('#p-goal').innerHTML = errBox(e.message); }
         return;
     }
-    if (name === 'notify' || name === 'books') {
-        if (window.TMAdmin) { if (name === 'notify') window.TMAdmin.showNotify(); else window.TMAdmin.showBooks(); }
+    if (name === 'notify' || name === 'books' || name === 'games') {
+        if (window.TMAdmin) { if (name === 'notify') window.TMAdmin.showNotify(); else if (name === 'games') window.TMAdmin.showGames(); else window.TMAdmin.showBooks(); }
         else $(`#p-${name}`).innerHTML = errBox('ملف admin.js مش موجود جنب index.html.');
         return;
     }

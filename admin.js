@@ -389,6 +389,76 @@ async function loadBooks() {
     renderBooks();
 }
 
+// ============================================================ 🎮 مراجعة ألعاب المدرسين (v34)
+const GAME_TPL = { quiz: 'اختيار من متعدد', truefalse: 'صح ولا غلط', match: 'وصّل', order: 'رتّب', sort: 'صنّف', memory: 'بطاقات الذاكرة', fill: 'أكمل الفراغ', flash: 'بطاقات التسميع', letters: 'كوّن الكلمة', wheel: 'العجلة' };
+const GAME_CATS = { quran: 'قرآن', tajweed: 'تجويد', arabic: 'لغة عربية', foundation: 'تأسيس وحروف', islamic: 'تربية إسلامية', other: 'أخرى' };
+// ملخص محتوى اللعبة كنص (عشان تراجعيها من غير ما تفتحيها)
+function gameSummary(g) {
+    const c = g.content || {};
+    const L = [];
+    const cut = (x) => esc(String(x == null ? '' : x).slice(0, 140));
+    (c.questions || []).slice(0, 8).forEach((q) => L.push(`❓ ${cut(q.q)} ← ${cut((q.options || [])[q.answer] || '')}`));
+    (c.items || []).slice(0, 10).forEach((it) => L.push(typeof it === 'string' ? cut(it) : `${cut(it.q || it.front || it.text || '')}${it.a != null ? ` ← ${it.a ? 'صح' : 'غلط'}` : ''}${it.back ? ` ← ${cut(it.back)}` : ''}`));
+    (c.pairs || []).slice(0, 10).forEach((p) => L.push(`${cut(p[0])} ↔ ${cut(p[1])}`));
+    (c.groups || []).slice(0, 6).forEach((gr) => L.push(`📂 ${cut(gr.name)}: ${cut((gr.items || []).join('، '))}`));
+    (c.rounds || []).slice(0, 6).forEach((r) => L.push(`${r.prompt ? cut(r.prompt) + ': ' : ''}${cut(Array.isArray(r) ? r.join(' ') : (r.items || []).join(' '))}`));
+    (c.cards || []).slice(0, 10).forEach((cd) => L.push(`${cut(cd[0])} ← ${cut(cd[1])}`));
+    (c.words || []).slice(0, 12).forEach((w) => L.push(cut(w)));
+    if (c.text) L.push(cut(c.text));
+    return L.length ? L.map((x) => `<li>${x}</li>`).join('') : '<li>مفيش ملخص — افتحي اللعبة وجرّبيها</li>';
+}
+let gamesRev = null;
+let gFilter = 'pending';
+function renderGames() {
+    const P = $('#p-games');
+    const counts = { pending: 0, approved: 0, rejected: 0 };
+    (gamesRev || []).forEach((g) => { counts[g.status] = (counts[g.status] || 0) + 1; });
+    const list = (gamesRev || []).filter((g) => g.status === gFilter);
+    const cnt = $('#cnt-games'); if (cnt) { cnt.hidden = !counts.pending; cnt.textContent = counts.pending; }
+    P.innerHTML = `<div class="card">
+        <div class="filters" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${[['pending', '⏳ مستنية مراجعة'], ['approved', '✅ منشورة'], ['rejected', '❌ اترفضت']].map(([k, l]) => `<button type="button" class="btn sm ${gFilter === k ? 'solid' : ''}" data-gf="${k}">${l} (${counts[k] || 0})</button>`).join('')}</div>
+        <p class="note" style="margin:0 0 6px">جرّبي اللعبة واتأكدي إن المحتوى صح (الآيات والإجابات). لما توافقي بتظهر لكل المدرسين في "ألعاب المدرسين"، والمدرس بيوصله إشعار بالقرار.</p>
+        ${gamesRev == null ? '<div class="loading">جاري التحميل…</div>' : !list.length ? `<div class="empty">${gFilter === 'pending' ? 'مفيش ألعاب مستنية مراجعة 👌' : 'مفيش'}</div>` : list.map((g) => `
+            <div class="bk-it" data-gid="${g.id}">
+                <div>
+                    <b>${esc(g.title)}</b>
+                    <div class="meta">${esc(GAME_TPL[g.template] || g.template)} · ${esc(g.teacher_name || 'مدرس')} ${g.teacher_phone ? `· <a href="https://wa.me/${esc(String(g.teacher_phone).replace(/\D/g, '').replace(/^0/, '20'))}" target="_blank" rel="noopener">${esc(g.teacher_phone)}</a>` : ''} · ${esc(ago(g.created_at))}${g.uses ? ` · اتحفظت ${nf(g.uses)}` : ''}${g.plays ? ` · اتلعبت ${nf(g.plays)}` : ''}${g.show_name ? '' : ' · (من غير اسم المدرس)'}</div>
+                    <ul class="gm-sum" style="margin:6px 0;padding-inline-start:18px;font-size:.85rem;line-height:1.8;max-height:180px;overflow:auto">${gameSummary(g)}</ul>
+                    <input type="text" data-gf-title value="${esc(g.title)}" maxlength="120" aria-label="الاسم">
+                    <select data-gf-cat aria-label="التصنيف">${Object.entries(GAME_CATS).map(([k, l]) => `<option value="${k}" ${g.category === k ? 'selected' : ''}>${l}</option>`).join('')}</select>
+                    <textarea data-gf-desc rows="2" maxlength="600" placeholder="وصف (اختياري)">${esc(g.description || '')}</textarea>
+                    ${g.review_note ? `<div class="meta">ملاحظتك: ${esc(g.review_note)}</div>` : ''}
+                </div>
+                <div class="ac">
+                    ${g.share_code ? `<a class="btn" href="${APP}/play.html?g=${esc(g.share_code)}" target="_blank" rel="noopener">▶ جرّبي اللعبة</a>` : ''}
+                    ${g.status !== 'approved' ? '<button type="button" class="btn solid" data-ga="approve">✅ وافقي وانشري</button>' : '<button type="button" class="btn" data-ga="save">💾 احفظي التعديل</button>'}
+                    ${g.status === 'pending' ? '<button type="button" class="btn" data-ga="reject">❌ ارفضي</button>' : ''}
+                    ${g.status === 'approved' ? '<button type="button" class="btn" data-ga="remove">🗑 شيليها من ألعاب المدرسين</button>' : ''}
+                </div>
+            </div>`).join('')}</div>`;
+    P.querySelectorAll('[data-gf]').forEach((b) => b.addEventListener('click', () => { gFilter = b.dataset.gf; renderGames(); }));
+    P.querySelectorAll('[data-ga]').forEach((btn) => btn.addEventListener('click', async () => {
+        const row = btn.closest('[data-gid]');
+        const g = gamesRev.find((x) => x.id === row.dataset.gid); if (!g) return;
+        const act = btn.dataset.ga;
+        let note = '';
+        if (act === 'reject') { note = prompt('سبب الرفض (هيوصل للمدرس):', 'فيه أخطاء في الإجابات'); if (note === null) return; }
+        if (act === 'remove' && !confirm('تشيلي اللعبة من ألعاب المدرسين؟ اللي حفظوها هتفضل عندهم.')) return;
+        btn.disabled = true;
+        try {
+            await api('game_decide', { id: g.id, decision: act === 'save' ? 'approve' : act, note,
+                title: row.querySelector('[data-gf-title]').value, category: row.querySelector('[data-gf-cat]').value, description: row.querySelector('[data-gf-desc]').value });
+            toast(act === 'approve' ? 'اتنشرت ✓ والمدرس وصله إشعار' : 'تم ✓');
+            gamesRev = null; loadGames();
+        } catch (e) { btn.disabled = false; if (e.message !== 'AUTH') toast(e.message); }
+    }));
+}
+async function loadGames() {
+    renderGames();
+    try { gamesRev = (await api('games_review')).items || []; } catch (e) { if (e.message !== 'AUTH') $('#p-games').innerHTML = errBox(/DB_ERROR|قاعدة/.test(e.message) ? 'مراجعة الألعاب محتاجة DB_v34_games.sql يتشغّل في Supabase.' : e.message); return; }
+    renderGames();
+}
+
 const NUDGE_STATE = { done: 'ضغط ✓', never: 'قال عنده بالفعل' };
 async function journeyCard(id) {
     try {
@@ -413,8 +483,12 @@ window.TMAdmin = {
     journeyCard,
     showNotify() { renderNotify(); },
     showBooks() { loadBooks(); },
-    reset() { hist = null; books = null; teachers = null; },
+    showGames() { loadGames(); },
+    reset() { hist = null; books = null; teachers = null; gamesRev = null; },
     // رقم الكتب المستنية على التبويب (بيتنادى بعد الدخول)
-    async badge() { try { const r = await api('books_review', { status: 'pending' }); const c = $('#cnt-books'); if (c) { const n = (r.items || []).length; c.hidden = !n; c.textContent = n; } } catch (e) { /* تجاهل */ } }
+    async badge() {
+        try { const r = await api('books_review', { status: 'pending' }); const c = $('#cnt-books'); if (c) { const n = (r.items || []).length; c.hidden = !n; c.textContent = n; } } catch (e) { /* تجاهل */ }
+        try { const r = await api('games_review', { status: 'pending' }); const c = $('#cnt-games'); if (c) { const n = (r.items || []).length; c.hidden = !n; c.textContent = n; } } catch (e) { /* تجاهل */ }
+    }
 };
 })();
