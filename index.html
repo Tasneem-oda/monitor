@@ -284,6 +284,8 @@ tr.cur td { background: var(--gold-soft); font-weight: 600; }
             <button data-tab="overview">📈 نظرة عامة</button>
             <button data-tab="billing">💳 الاشتراكات <span class="cnt" id="cnt-bill" hidden></span></button>
             <button data-tab="teachers">👩‍🏫 المدرسين <span class="cnt" id="cnt-risk" hidden></span></button>
+            <button data-tab="notify">📣 الإشعارات</button>
+            <button data-tab="books">📚 مراجعة الكتب <span class="cnt" id="cnt-books" hidden></span></button>
             <button data-tab="suggestions">💡 الاقتراحات <span class="cnt neutral" id="cnt-sug" hidden></span></button>
             <button data-tab="problems">⚠️ المشاكل <span class="cnt" id="cnt-prob" hidden></span></button>
             <button data-tab="usage">🧭 الاستخدام</button>
@@ -308,6 +310,10 @@ tr.cur td { background: var(--gold-soft); font-weight: 600; }
             <div id="s-list"><div class="loading">جاري التحميل…</div></div>
         </section>
         <!-- المشاكل -->
+        <section class="panel" id="p-notify"><div class="loading">جاري التحميل…</div></section>
+
+        <section class="panel" id="p-books"><div class="loading">جاري التحميل…</div></section>
+
         <section class="panel" id="p-problems"><div class="loading">جاري التحميل…</div></section>
         <!-- الاستخدام -->
         <section class="panel" id="p-usage"><div class="loading">جاري التحميل…</div></section>
@@ -360,7 +366,10 @@ const EV = {
     payment_reminder_sent: ['📨', 'بعت تذكير دفع'], parent_report_sent: ['📄', 'بعت تقرير لولي الأمر'],
     income_viewed: ['💰', 'شاف فلوس الشهر'], suggestion_sent: ['💡', 'بعت اقتراح'], pwa_installed: ['📲', 'ثبّت التطبيق'],
     onboarding_step: ['🧭', 'خطوة في دليل البداية'], plan_click: ['⭐', 'ضغط على باقة'], sign_up: ['🎉', 'سجّل حساب'],
-    landing_cta: ['🔗', 'ضغط في صفحة التسويق']
+    landing_cta: ['🔗', 'ضغط في صفحة التسويق'],
+    game_played: ['🎮', 'لعب لعبة مع طلابه'], book_publish_requested: ['🌍', 'طلب نشر كتاب للعامة'], public_book_added: ['📥', 'ضاف كتاب من المكتبة العامة'],
+    announcement_seen: ['📣', 'شاف إشعارك'], announcement_click: ['👆', 'ضغط على إشعارك'], journey_nudge: ['🤖', 'رسالة تلقائية'], contact_click: ['💬', 'ضغط تواصل مع المطوّر'],
+    lesson_report_sent: ['📩', 'بعت تقرير الحصة لولي الأمر']
 };
 const evIcon = (e) => (EV[e] || ['•'])[0];
 const evName = (e) => (EV[e] || [null, e])[1];
@@ -404,7 +413,7 @@ async function call(section, extra = {}, endpoint = CFG.ENDPOINT) {
     } catch (e) {
         throw new Error(e.name === 'AbortError' ? 'الخادم اتأخر في الرد. جرّبي تاني.' : 'مقدرناش نوصل لـ n8n. اتأكدي من النت ومن الروابط في config.js.');
     } finally { clearTimeout(timer); }
-    if (res.status === 404) throw new Error(endpoint === CFG.ENDPOINT ? 'workflow "owner-dashboard" مش متفعّل في n8n (404).' : 'workflow "owner-billing" مش متفعّل في n8n (404).');
+    if (res.status === 404) throw new Error(`workflow "${String(endpoint).split('/').pop()}" مش متفعّل في n8n (404).`);
     let body = null;
     try { body = await res.json(); } catch (e) { /* تجاهل */ }
     if (res.status === 401) { await sb.auth.signOut(); showLogin('انتهت الجلسة، ادخلي تاني.'); throw new Error('AUTH'); }
@@ -666,6 +675,8 @@ async function openTeacher(id, opts = {}) {
                 ${!evs.length ? '<div class="empty">مفيش أحداث متسجلة للمدرس ده لسه</div>' : Object.entries(byDay).map(([k, list]) => `
                     <div style="font-weight:700;font-size:13px;margin:12px 0 4px;color:var(--ink2)">${new Date(k).toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
                     <div class="feed">${list.map((e) => evRow(e, false)).join('')}</div>`).join('')}</div>`;
+        // v33: رحلة المدرس (أول طالب، أول حصة، الزيارات، الرسايل التلقائية اللي ظهرتله)
+        if (window.TMAdmin && window.TMAdmin.journeyCard) window.TMAdmin.journeyCard(id).then((h) => { const b = $('#d-body'); if (b && h) b.insertAdjacentHTML('afterbegin', h); });
     } catch (e) {
         if (e.message !== 'AUTH') $('#d-body').innerHTML = errBox(e.message);
     }
@@ -1174,6 +1185,11 @@ async function switchTab(name) {
         try { await refreshGoal(); } catch (e) { if (e.message !== 'AUTH') $('#p-goal').innerHTML = errBox(e.message); }
         return;
     }
+    if (name === 'notify' || name === 'books') {
+        if (window.TMAdmin) { if (name === 'notify') window.TMAdmin.showNotify(); else window.TMAdmin.showBooks(); }
+        else $(`#p-${name}`).innerHTML = errBox('ملف admin.js مش موجود جنب index.html.');
+        return;
+    }
     if (name === 'billing') {
         if (window.TMBilling) window.TMBilling.show();
         else $('#p-billing').innerHTML = errBox('ملف billing.js مش موجود جنب index.html.');
@@ -1191,9 +1207,10 @@ async function switchTab(name) {
 async function refreshAll() {
     state.overview = state.teachers = state.suggestions = state.health = state.goal = state.goalRows = null;
     if (window.TMBilling) window.TMBilling.reset();
+    if (window.TMAdmin) window.TMAdmin.reset();
     const btn = $('#btn-refresh'); btn.disabled = true;
     try {
-        if (current !== 'billing') { state.overview = await call('overview'); updateHealthPill(); }
+        if (!['billing', 'notify', 'books'].includes(current)) { state.overview = await call('overview'); updateHealthPill(); }
         await switchTab(current);
         if (current !== 'goal') refreshGoal().catch(() => { /* الشريط بس */ });
     } catch (e) { if (e.message !== 'AUTH') toast(e.message); }
@@ -1209,10 +1226,11 @@ async function showApp(session) {
     $('#view-login').hidden = true; $('#view-app').hidden = false;
     $('#who').textContent = session.user.email || '';
     const hash = (location.hash || '').slice(1);
-    const first = ['goal', 'overview', 'billing', 'teachers', 'suggestions', 'problems', 'usage', 'live', 'flow'].includes(hash) ? hash : 'goal';
+    const first = ['goal', 'overview', 'billing', 'notify', 'books', 'teachers', 'suggestions', 'problems', 'usage', 'live', 'flow'].includes(hash) ? hash : 'goal';
+    if (window.TMAdmin) window.TMAdmin.badge();
     if (first !== 'goal') refreshGoal().catch(() => { /* الشريط اللي فوق بس، مش لازم */ });
-    if (first === 'billing') {   // الاشتراكات مش محتاجة بيانات التتبع: تفتح على طول
-        switchTab('billing');
+    if (first === 'billing' || first === 'notify' || first === 'books') {   // مش محتاجة بيانات التتبع: تفتح على طول
+        switchTab(first);
         call('overview').then((o) => { state.overview = o; updateHealthPill(); }).catch(() => { /* تجاهل */ });
         return;
     }
@@ -1250,7 +1268,7 @@ setInterval(async () => {
 }, 5 * 60 * 1000);
 
 // أدوات مشتركة لتبويب الاشتراكات (billing.js)
-window.TMD = { $, $$, esc, nf, ago, fmtDate, call, toast, errBox, lineChart, hbars, src, waLink, switchTab: (n) => switchTab(n) };
+window.TMD = { $, $$, esc, nf, ago, fmtDate, call, toast, errBox, lineChart, hbars, src, waLink, sb, switchTab: (n) => switchTab(n) };
 
 // نبدأ بعد ما billing.js يتحمّل
 const start = () => sb.auth.getSession().then(({ data }) => { if (data && data.session) showApp(data.session); else showLogin(); });
@@ -1258,5 +1276,6 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
 })();
 </script>
 <script src="billing.js"></script>
+<script src="admin.js"></script>
 </body>
 </html>

@@ -14,6 +14,12 @@ window.TM_DASH_CONFIG = {
     // n8n: الـ webhook بتاع workflow "owner-billing" (تبويب الاشتراكات)
     BILLING_ENDPOINT: 'https://vmi3639126.contaboserver.net/webhook/owner-billing',
 
+    // v33: الـ webhook بتاع workflow "owner-admin" (تبويب الإشعارات + مراجعة الكتب)
+    ADMIN_ENDPOINT: 'https://vmi3639126.contaboserver.net/webhook/owner-admin',
+
+    // v33: لينك مجموعة واتساب المدرسين (زرار جاهز في الإشعارات)
+    COMMUNITY_URL: 'https://chat.whatsapp.com/LRWtf3mTrmBK6CA0FBwg3I',
+
     // الأسعار اللي بتتكتب تلقائي في خانة المبلغ (تقدري تغيّري المبلغ وقت التفعيل لو فيه خصم)
     // لو عملتي سعر مخفّض للـ 6 شهور أو السنة غيّريه هنا
     PLANS: {
