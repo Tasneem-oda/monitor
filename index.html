@@ -228,8 +228,32 @@ select.inp, input.inp, textarea.inp { border: 1px solid var(--line); border-radi
 .funnel .hbar[data-list]:hover .n { color: var(--primary); text-decoration: underline; }
 tr.cur td { background: var(--gold-soft); font-weight: 600; }
 .lst-tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+/* v35: الموبايل — مفيش حاجة تطلع برّه عرض الشاشة (كانت بتخلّي الصفحة تصغر والهيدر يغطي التبويبات) */
+html, body { overflow-x: hidden; }
+.card .pill, .verdict .pill, .verdict .tag, .card > .tag { white-space: normal; max-width: 100%; }
+.src { flex-wrap: wrap; min-width: 0; } .src code { overflow-wrap: anywhere; white-space: normal; }
+.wrap-cell, td.wrap-cell { white-space: normal; min-width: 160px; overflow-wrap: anywhere; }
+img, svg, video, iframe { max-width: 100%; }
 @media (max-width: 600px) {
     .top { position: static; }
+    .top-in { padding: 8px 10px; gap: 8px; }
+    .top-actions { width: 100%; margin: 0; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+    .top-actions::-webkit-scrollbar, .goalbar::-webkit-scrollbar { display: none; }
+    .top-actions > * { flex-shrink: 0; }
+    .goalbar { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding: 0 10px 8px; }
+    .goalbar > * { flex-shrink: 0; }
+    .wrap { padding: 0 10px 40px; }
+    .tabs { position: sticky; top: 0; z-index: 45; background: var(--bg); margin: 0 -10px; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+    .card { padding: 12px; }
+    .g-kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    input, select, textarea { font-size: 16px; }
+    .btn { min-height: 38px; }
+    .btn.sm { min-height: 32px; }
+    table { font-size: 13px; }
+    .bk-it { flex-direction: column; align-items: stretch !important; }
+    .tag { white-space: normal; }
+    .bk-it .ac { display: flex; flex-wrap: wrap; gap: 6px; }
+    .bk-it input, .bk-it select, .bk-it textarea { width: 100%; }
     .verdict .big { font-size: 32px; }
     .kpi .num { font-size: 25px; }
     .sug { grid-template-columns: 1fr; }
@@ -287,6 +311,7 @@ tr.cur td { background: var(--gold-soft); font-weight: 600; }
             <button data-tab="notify">📣 الإشعارات</button>
             <button data-tab="books">📚 مراجعة الكتب <span class="cnt" id="cnt-books" hidden></span></button>
             <button data-tab="games">🎮 مراجعة الألعاب <span class="cnt" id="cnt-games" hidden></span></button>
+            <button data-tab="videos">🎬 الشروحات</button>
             <button data-tab="suggestions">💡 الاقتراحات <span class="cnt neutral" id="cnt-sug" hidden></span></button>
             <button data-tab="problems">⚠️ المشاكل <span class="cnt" id="cnt-prob" hidden></span></button>
             <button data-tab="usage">🧭 الاستخدام</button>
@@ -316,6 +341,7 @@ tr.cur td { background: var(--gold-soft); font-weight: 600; }
         <section class="panel" id="p-books"><div class="loading">جاري التحميل…</div></section>
         <!-- v34: مراجعة ألعاب المدرسين (admin.js) -->
         <section class="panel" id="p-games"><div class="loading">جاري التحميل…</div></section>
+        <section class="panel" id="p-videos"><div class="loading">جاري التحميل…</div></section>
 
         <section class="panel" id="p-problems"><div class="loading">جاري التحميل…</div></section>
         <!-- الاستخدام -->
@@ -377,7 +403,7 @@ const EV = {
 const evIcon = (e) => (EV[e] || ['•'])[0];
 const evName = (e) => (EV[e] || [null, e])[1];
 const BAD_EVENTS = ['rage_click', 'error_shown', 'js_error', 'api_error', 'api_slow'];
-const PAGES = { dashboard: 'الرئيسية', lesson: 'الحصة', students: 'الطلاب', student: 'ملف الطالب', schedule: 'الجدول', books: 'المكتبة', settings: 'الإعدادات', subscription: 'الاشتراك', index: 'صفحة التسويق' };
+const PAGES = { learn: 'الشروحات', mushaf: 'المصحف', games: 'الألعاب', group: 'المجموعة', groups: 'المجموعات', 'group-lesson': 'حصة المجموعة', reader: 'الكتاب في تاب', dashboard: 'الرئيسية', lesson: 'الحصة', students: 'الطلاب', student: 'ملف الطالب', schedule: 'الجدول', books: 'المكتبة', settings: 'الإعدادات', subscription: 'الاشتراك', index: 'صفحة التسويق' };
 const pageName = (p) => PAGES[String(p || '').replace(/\.html$/, '')] || p || '—';
 const STATUS = {
     new: ['جديد', 'warn'], planned: ['هيتعمل', 'info'], in_progress: ['بيتعمل', 'info'],
@@ -1188,8 +1214,8 @@ async function switchTab(name) {
         try { await refreshGoal(); } catch (e) { if (e.message !== 'AUTH') $('#p-goal').innerHTML = errBox(e.message); }
         return;
     }
-    if (name === 'notify' || name === 'books' || name === 'games') {
-        if (window.TMAdmin) { if (name === 'notify') window.TMAdmin.showNotify(); else if (name === 'games') window.TMAdmin.showGames(); else window.TMAdmin.showBooks(); }
+    if (name === 'notify' || name === 'books' || name === 'games' || name === 'videos') {
+        if (window.TMAdmin) { if (name === 'notify') window.TMAdmin.showNotify(); else if (name === 'games') window.TMAdmin.showGames(); else if (name === 'videos') window.TMAdmin.showVideos(); else window.TMAdmin.showBooks(); }
         else $(`#p-${name}`).innerHTML = errBox('ملف admin.js مش موجود جنب index.html.');
         return;
     }
@@ -1229,7 +1255,7 @@ async function showApp(session) {
     $('#view-login').hidden = true; $('#view-app').hidden = false;
     $('#who').textContent = session.user.email || '';
     const hash = (location.hash || '').slice(1);
-    const first = ['goal', 'overview', 'billing', 'notify', 'books', 'teachers', 'suggestions', 'problems', 'usage', 'live', 'flow'].includes(hash) ? hash : 'goal';
+    const first = ['goal', 'overview', 'billing', 'notify', 'books', 'games', 'videos', 'teachers', 'suggestions', 'problems', 'usage', 'live', 'flow'].includes(hash) ? hash : 'goal';
     if (window.TMAdmin) window.TMAdmin.badge();
     if (first !== 'goal') refreshGoal().catch(() => { /* الشريط اللي فوق بس، مش لازم */ });
     if (first === 'billing' || first === 'notify' || first === 'books') {   // مش محتاجة بيانات التتبع: تفتح على طول

@@ -430,13 +430,22 @@ function renderGames() {
                     ${g.review_note ? `<div class="meta">ملاحظتك: ${esc(g.review_note)}</div>` : ''}
                 </div>
                 <div class="ac">
-                    ${g.share_code ? `<a class="btn" href="${APP}/play.html?g=${esc(g.share_code)}" target="_blank" rel="noopener">▶ جرّبي اللعبة</a>` : ''}
+                    <button type="button" class="btn solid" data-gplay>▶ جرّبي اللعبة هنا</button>
                     ${g.status !== 'approved' ? '<button type="button" class="btn solid" data-ga="approve">✅ وافقي وانشري</button>' : '<button type="button" class="btn" data-ga="save">💾 احفظي التعديل</button>'}
                     ${g.status === 'pending' ? '<button type="button" class="btn" data-ga="reject">❌ ارفضي</button>' : ''}
                     ${g.status === 'approved' ? '<button type="button" class="btn" data-ga="remove">🗑 شيليها من ألعاب المدرسين</button>' : ''}
                 </div>
             </div>`).join('')}</div>`;
     P.querySelectorAll('[data-gf]').forEach((b) => b.addEventListener('click', () => { gFilter = b.dataset.gf; renderGames(); }));
+    // v35: اللعبة بتشتغل جوه المونيتور نفسه (نسخة من محرّك الألعاب في games/) — مش محتاجة لينك البرنامج
+    P.querySelectorAll('[data-gplay]').forEach((btn) => btn.addEventListener('click', async () => {
+        const g = gamesRev.find((x) => x.id === btn.closest('[data-gid]').dataset.gid); if (!g) return;
+        btn.disabled = true;
+        try {
+            const m = await import('./games/engine.js');
+            m.openGame({ title: g.title, template: g.template, subject: g.subject, content: g.content || {} }, {});
+        } catch (e) { toast('اللعبة مافتحتش: ' + (e.message || e)); } finally { btn.disabled = false; }
+    }));
     P.querySelectorAll('[data-ga]').forEach((btn) => btn.addEventListener('click', async () => {
         const row = btn.closest('[data-gid]');
         const g = gamesRev.find((x) => x.id === row.dataset.gid); if (!g) return;
@@ -457,6 +466,117 @@ async function loadGames() {
     renderGames();
     try { gamesRev = (await api('games_review')).items || []; } catch (e) { if (e.message !== 'AUTH') $('#p-games').innerHTML = errBox(/DB_ERROR|قاعدة/.test(e.message) ? 'مراجعة الألعاب محتاجة DB_v34_games.sql يتشغّل في Supabase.' : e.message); return; }
     renderGames();
+}
+
+
+// ============================================================ v35: الشروحات (فيديوهات يوتيوب بتظهر في أماكنها في البرنامج)
+const VPLACES = [
+    ['general', 'عام / أول مرة'], ['dashboard', 'الرئيسية'], ['students', 'الطلاب'], ['student', 'ملف الطالب'], ['schedule', 'جدولي والمواعيد'],
+    ['lesson', 'الحصة'], ['lesson:homework', 'الحصة — الواجب والتقييم'], ['lesson:board', 'الحصة — السبورة وأدوات الشرح'], ['group-lesson', 'حصة المجموعة'],
+    ['groups', 'المجموعات'], ['billing', 'الدفع والحسابات'], ['books', 'المكتبة'], ['books:upload', 'المكتبة — رفع كتاب'], ['mushaf', 'المصحف'],
+    ['games', 'ألعاب الحصة'], ['games:create', 'الألعاب — عمل لعبة'], ['settings', 'الإعدادات'], ['subscription', 'الاشتراك'], ['income', 'الدخل']];
+const vLabel = (k) => (VPLACES.find((x) => x[0] === k) || [k, k])[1];
+function ytId(url) {
+    const v = String(url || '').trim();
+    if (/^[\w-]{11}$/.test(v)) return v;
+    const m = v.match(/(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/|v\/))([\w-]{11})/);
+    return m ? m[1] : '';
+}
+let videos = null;
+let vEdit = null;   // الفيديو اللي بيتعدّل (أو {} لفيديو جديد)
+function videoForm(v) {
+    const places = new Set(v.places || []);
+    const id = ytId(v.url || v.youtube_id);
+    return `<div class="card vd-form">
+        <h3 style="margin-top:0">${v.id ? 'تعديل الشرح' : 'شرح جديد'}</h3>
+        <label class="vd-l">لينك الفيديو على يوتيوب</label>
+        <input type="url" dir="ltr" data-vf="url" value="${esc(v.url || (v.youtube_id ? `https://youtu.be/${v.youtube_id}` : ''))}" placeholder="https://youtu.be/...">
+        <div class="vd-prev" data-vprev>${id ? `<img src="https://i.ytimg.com/vi/${id}/mqdefault.jpg" alt="">` : '<span>الصورة هتظهر هنا لما تحطي اللينك</span>'}</div>
+        <label class="vd-l">العنوان</label>
+        <input type="text" data-vf="title" maxlength="140" value="${esc(v.title || '')}" placeholder="مثلًا: إزاي تسجّل حصة في دقيقة">
+        <label class="vd-l">وصف قصير <small>(اختياري)</small></label>
+        <textarea data-vf="description" rows="2" maxlength="400">${esc(v.description || '')}</textarea>
+        <label class="vd-l">يظهر فين في البرنامج؟ <small>(اختاري مكان أو أكتر — أول مكان هو الأساسي)</small></label>
+        <div class="vd-places">${VPLACES.map(([k, l]) => `<label class="vd-pl ${places.has(k) ? 'on' : ''}"><input type="checkbox" value="${k}" ${places.has(k) ? 'checked' : ''}> ${esc(l)}</label>`).join('')}</div>
+        <div class="vd-row">
+            <label>المدة <input type="text" data-vf="duration" maxlength="10" value="${esc(v.duration || '')}" placeholder="2:30"></label>
+            <label>الترتيب <input type="number" data-vf="sort" value="${Number(v.sort) || 0}" style="width:80px"></label>
+            <label class="vd-chk"><input type="checkbox" data-vf="active" ${v.active === false ? '' : 'checked'}> ظاهر للمدرسين</label>
+        </div>
+        <div class="vd-row">
+            <button type="button" class="btn solid" data-vsave>💾 احفظي</button>
+            <button type="button" class="btn" data-vcancel>إلغاء</button>
+            ${v.id ? '<button type="button" class="btn" data-vdel style="color:var(--bad);margin-inline-start:auto">🗑 امسحي</button>' : ''}
+        </div>
+    </div>`;
+}
+function renderVideos() {
+    const P = $('#p-videos');
+    if (!document.getElementById('vd-css')) {
+        const st = document.createElement('style'); st.id = 'vd-css';
+        st.textContent = `.vd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.vd-card{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--card);display:flex;flex-direction:column}
+.vd-card img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;background:#222}
+.vd-card .bd{padding:10px;display:flex;flex-direction:column;gap:4px;flex:1}.vd-card b{font-size:14.5px}.vd-card .meta{font-size:12px;color:var(--ink2)}
+.vd-card .ac{display:flex;gap:6px;padding:0 10px 10px;flex-wrap:wrap}
+.vd-card.off{opacity:.55}
+.vd-form{margin-bottom:14px;display:flex;flex-direction:column;gap:6px}.vd-form input[type=text],.vd-form input[type=url],.vd-form textarea{border:1px solid var(--line);border-radius:10px;padding:8px 10px;width:100%;background:#fff}
+.vd-l{font-weight:600;font-size:13.5px;margin-top:6px}.vd-l small{font-weight:400;color:var(--ink2)}
+.vd-prev{border:1px dashed var(--line);border-radius:12px;min-height:80px;display:flex;align-items:center;justify-content:center;color:var(--ink3);font-size:13px;overflow:hidden;max-width:320px}.vd-prev img{width:100%;display:block}
+.vd-places{display:flex;flex-wrap:wrap;gap:6px}.vd-pl{display:inline-flex;gap:5px;align-items:center;border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:12.5px;cursor:pointer;background:#fff}.vd-pl.on{border-color:var(--primary);background:#F1EDF6;color:var(--primary);font-weight:600}
+.vd-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:6px}.vd-row input[type=text],.vd-row input[type=number]{border:1px solid var(--line);border-radius:8px;padding:5px 8px;width:90px}
+.vd-chk{display:inline-flex;gap:6px;align-items:center}`;
+        document.head.appendChild(st);
+    }
+    const list = videos || [];
+    P.innerHTML = `${vEdit ? videoForm(vEdit) : ''}
+        <div class="card">
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
+                <h3 style="margin:0">🎬 الشروحات (${list.length})</h3>
+                ${vEdit ? '' : '<button type="button" class="btn solid" data-vnew style="margin-inline-start:auto">+ شرح جديد</button>'}
+            </div>
+            <p class="note" style="margin:0 0 10px">ارفعي الفيديو على يوتيوب (عام أو "غير مدرج")، وحطي اللينك هنا واختاري مكانه. المدرس بيشوف زرار صغير "▶ شرح" في الصفحة دي، وبيتفرج في مشغّل صغير وهو شغال، وكل الشروحات في صفحة "الشروحات".</p>
+            ${videos == null ? '<div class="loading">جاري التحميل…</div>' : !list.length ? '<div class="empty">لسه مفيش شروحات. ابدئي بشرح "أول مرة في البرنامج".</div>' : `<div class="vd-grid">${list.slice().sort((a, b) => (a.sort || 0) - (b.sort || 0)).map((v) => { const id = ytId(v.url || v.youtube_id); return `<div class="vd-card ${v.active === false ? 'off' : ''}" data-vid="${esc(v.id)}">
+                <img src="https://i.ytimg.com/vi/${id}/mqdefault.jpg" alt="" loading="lazy">
+                <div class="bd"><b>${esc(v.title)}</b><div class="meta">${esc((v.places || []).map(vLabel).join(' · ') || 'من غير مكان')}</div>
+                    <div class="meta">${v.active === false ? '🙈 مخفي · ' : ''}${v.views ? `👁 ${nf(v.views)} مشاهدة` : 'لسه محدش اتفرج'}${v.duration ? ` · ${esc(v.duration)}` : ''}</div></div>
+                <div class="ac"><button type="button" class="btn sm" data-vedit>✏️ تعديل</button><a class="btn sm" href="https://youtu.be/${id}" target="_blank" rel="noopener">▶ يوتيوب</a></div></div>`; }).join('')}</div>`}
+        </div>`;
+    const nb = P.querySelector('[data-vnew]'); if (nb) nb.addEventListener('click', () => { vEdit = { places: [], active: true }; renderVideos(); P.scrollIntoView({ behavior: 'smooth' }); });
+    P.querySelectorAll('[data-vedit]').forEach((b) => b.addEventListener('click', () => { vEdit = { ...(videos.find((x) => x.id === b.closest('[data-vid]').dataset.vid) || {}) }; renderVideos(); window.scrollTo({ top: P.offsetTop - 60, behavior: 'smooth' }); }));
+    const form = P.querySelector('.vd-form');
+    if (!form) return;
+    const val = (k) => form.querySelector(`[data-vf="${k}"]`);
+    val('url').addEventListener('input', () => { const id = ytId(val('url').value); form.querySelector('[data-vprev]').innerHTML = id ? `<img src="https://i.ytimg.com/vi/${id}/mqdefault.jpg" alt="">` : '<span>اللينك ده مش لينك يوتيوب</span>'; });
+    form.querySelectorAll('.vd-pl input').forEach((c) => c.addEventListener('change', () => c.closest('.vd-pl').classList.toggle('on', c.checked)));
+    form.querySelector('[data-vcancel]').addEventListener('click', () => { vEdit = null; renderVideos(); });
+    form.querySelector('[data-vsave]').addEventListener('click', async (e) => {
+        const id = ytId(val('url').value);
+        const title = val('title').value.trim();
+        const places = [...form.querySelectorAll('.vd-pl input:checked')].map((c) => c.value);
+        if (!id) { toast('حطي لينك يوتيوب صح'); val('url').focus(); return; }
+        if (!title) { toast('اكتبي عنوان للشرح'); val('title').focus(); return; }
+        if (!places.length) { toast('اختاري مكان واحد على الأقل'); return; }
+        const btn = e.currentTarget; btn.disabled = true;
+        try {
+            await api('video_save', { id: vEdit.id || undefined, youtube_id: id, url: val('url').value.trim(), title, description: val('description').value.trim(), places, duration: val('duration').value.trim(), sort: Number(val('sort').value) || 0, active: val('active').checked });
+            toast('اتحفظ ✓ هيظهر للمدرسين خلال ساعات (أو فورًا لو فتحوا صفحة الشروحات)');
+            vEdit = null; videos = null; loadVideos();
+        } catch (err) { btn.disabled = false; if (err.message !== 'AUTH') toast(err.message); }
+    });
+    const del = form.querySelector('[data-vdel]');
+    if (del) del.addEventListener('click', async () => {
+        if (!confirm('تمسحي الشرح ده؟')) return;
+        try { await api('video_delete', { id: vEdit.id }); toast('اتمسح ✓'); vEdit = null; videos = null; loadVideos(); } catch (err) { if (err.message !== 'AUTH') toast(err.message); }
+    });
+}
+async function loadVideos() {
+    renderVideos();
+    try { videos = (await api('videos_list')).items || []; } catch (e) {
+        if (e.message !== 'AUTH') $('#p-videos').innerHTML = errBox(/UNKNOWN|DB_ERROR|قاعدة|غير معروف/.test(e.message) ? 'الشروحات محتاجة DB_v35.sql يتشغّل في Supabase + تحديث owner-admin في n8n.' : e.message);
+        return;
+    }
+    renderVideos();
 }
 
 const NUDGE_STATE = { done: 'ضغط ✓', never: 'قال عنده بالفعل' };
@@ -484,7 +604,8 @@ window.TMAdmin = {
     showNotify() { renderNotify(); },
     showBooks() { loadBooks(); },
     showGames() { loadGames(); },
-    reset() { hist = null; books = null; teachers = null; gamesRev = null; },
+    showVideos() { loadVideos(); },
+    reset() { hist = null; books = null; teachers = null; gamesRev = null; videos = null; vEdit = null; },
     // رقم الكتب المستنية على التبويب (بيتنادى بعد الدخول)
     async badge() {
         try { const r = await api('books_review', { status: 'pending' }); const c = $('#cnt-books'); if (c) { const n = (r.items || []).length; c.hidden = !n; c.textContent = n; } } catch (e) { /* تجاهل */ }
